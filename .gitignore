@@ -3,7 +3,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,windows,linux,pycharm,pycharm+all,git
 
 ### Cosas Custom Re Facheras ###
-.env
+*.env
 
 ### Git ###
 # Created by git for backups. To disable backups in Git:
