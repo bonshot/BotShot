@@ -4,6 +4,10 @@
 
 ### Cosas Custom Re Facheras ###
 *.env
+sounds
+*.log
+images
+src/__pycache__
 
 ### Git ###
 # Created by git for backups. To disable backups in Git:
