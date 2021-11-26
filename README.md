@@ -16,10 +16,17 @@ almacenarlas en un directorio designado acorde.
 <br/>
 
 **Creado por:**
+<p align="left">
+<img align="left" src="https://github.com/NLGS2907.png" height=32 width=32 />
 
-* [Franco "NLGS" Lighterman Reismann](https://github.com/NLGS2907)
+[Franco "NLGS" Lighterman Reismann](https://github.com/NLGS2907)
+</p>
 
-* [Facundo "BonShot" Aguirre Argerich](https://github.com/bonshot)
+<p align="left">
+<img align="left" src="https://github.com/bonshot.png" height=32 width=32 />
+
+[Facundo "BonShot" Aguirre Argerich](https://github.com/bonshot)
+</p>
 
 <hr style="height:1px; width:35%" />
 
