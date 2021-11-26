@@ -243,10 +243,12 @@ Los archivos, obviando su extensión, siguen la convención de las [variables](#
 
 #### Carpetas
 
-A los efectos de este proyecto, dentro de [images](images) se recomienda **NO** poner ningún tipo de archivo dentro de una carpeta que tenga una
-subcarpeta (o carpeta "hija"). Es decir, sólo ponerlas en las carpetas "hojas".
+A los efectos de este proyecto, dentro del directorio de imágenes a utilizar
+se recomienda **NO** poner ningún tipo de archivo dentro de una carpeta que
+tenga una subcarpeta (o carpeta "hija"). Es decir, sólo ponerlas en las
+carpetas "hojas".
 
-Cualquier otra carpeta fuera del sub-directorio `images` no sigue ninguna
+Cualquier otra carpeta fuera de este sub-directorio no sigue ninguna
 convención para las carpetas, pero la de los archivos sigue aplicando.
 
 <hr style="height:1px; width:50%" />
