@@ -3,39 +3,23 @@ Módulo hecho para trabajar con archivos, como leer y cargar
 información persistente.
 """
 
-from csv import reader
+from json import load, dump
 
 DiccionarioPares = dict[str, str]
 
-def cargar_pares_valores(nombre_archivo: str) -> DiccionarioPares:
+def cargar_json(nombre_archivo: str) -> DiccionarioPares:
     """
-    Lee el archivo de prefijos y devuelve un diccionario con
-    cada server y su prefijo asignado mapeados en un diccionario.
+    Lee y carga un archivo JSON.
     """
-
     dic_pares_valores = dict()
 
-    with open(nombre_archivo, 'r') as archivo:
-
-        prefijos = reader(archivo, delimiter='=')
-
-        for clave, valor in prefijos:
-
-            dic_pares_valores[clave] = valor
-
+    with open(nombre_archivo, mode='r') as archivo:
+        dic_pares_valores = load(archivo)
     return dic_pares_valores
 
-def guardar_pares_valores(dic_pares_valores: DiccionarioPares, nombre_archivo: str) -> None:
+def guardar_json(dic_pares_valores: DiccionarioPares, nombre_archivo: str) -> None:
     """
-    Recibe un diccionario y guarda la información de este en un archivo CSV.
+    Recibe un diccionario y guarda la informacion del mismo en un archivo JSON.
     """
-
-    lista_a_imprimir = list()
-
-    with open(nombre_archivo, 'w') as archivo:
-
-        for clave, valor in dic_pares_valores.items():
-
-            lista_a_imprimir.append(f"{clave}={valor}")
-
-        archivo.write('\n'.join(lista_a_imprimir))
+    with open(nombre_archivo, mode='w') as archivo:
+        dump(dic_pares_valores, archivo, indent=4)

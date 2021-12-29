@@ -14,10 +14,8 @@ from botshot import bot
 def main():
 
     bot.run(TOKEN)
-
     return 0
 
 
 if __name__ == '__main__':
-
     main()
