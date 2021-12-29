@@ -11,7 +11,7 @@ from discord.ext.commands import Bot
 
 import archivos
 
-from constantes import PREFIXES_FILE, DEFAULT_PREFIX, LOG_PATH
+from constantes import PROPERTIES_FILE, DEFAULT_PREFIX, LOG_PATH
 
 def nuevo_logger(nombre: str) -> logging.Logger:
     """
@@ -43,7 +43,7 @@ def get_prefijo(bot, mensaje: Message) -> str:
     corresponda al servidor de donde se convoca el comando.
     """
 
-    return archivos.cargar_pares_valores(PREFIXES_FILE).get(str(mensaje.guild.id), DEFAULT_PREFIX)
+    return archivos.cargar_json(PROPERTIES_FILE).get("prefijos").get(str(mensaje.guild.id), DEFAULT_PREFIX)
 
 
 class CustomBot(Bot):
