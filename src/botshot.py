@@ -1,20 +1,41 @@
 """
 Módulo destinado a contener las funciones del bot.
 """
-from discord import Guild, File
+from discord import Guild, File, Message
 from discord.ext.commands import Context, has_role
 
 import custom_bot
 from custom_bot import log
+from interfaz import ConfirmacionGuardar
 import archivos
-import os
-import random
 
 from constantes import DEV_ROLE_ID, PROPERTIES_FILE, IMAGES_PATH, DEFAULT_PREFIX
 
 
 bot = custom_bot.CustomBot()
 
+def es_canal_escuchado(mensaje: Message):
+    """
+    Devuelve 'True' si se está en un canal escuchado.
+    Si no, devuelve 'False'.
+    """
+    canal_actual = str(mensaje.channel.id)
+    dic_propiedades = archivos.cargar_json(PROPERTIES_FILE)
+    return canal_actual in dic_propiedades['canales_escuchables']
+
+def mensaje_tiene_imagen(mensaje: Message):
+    """
+    Devuelve 'True' si el mensaje contiene una imagen.
+    Caso contrario, devuelve 'False'.
+    """
+    if not mensaje.attachments: 
+        return False
+
+    for contenido in mensaje.attachments:
+        if "image" not in contenido.content_type:
+            return False
+
+    return True
 
 @bot.event
 async def on_ready() -> None:
@@ -36,6 +57,20 @@ async def on_guild_join(guild: Guild) -> None:
     dic_propiedades['prefijos'][str(guild.id)] = DEFAULT_PREFIX
 
     archivos.guardar_json(dic_propiedades, PROPERTIES_FILE)
+
+@bot.event
+async def on_message(mensaje: Message):
+    """
+    Escucha un mensaje enviado si este tiene una imagen.
+    """
+    await bot.process_commands(mensaje)
+
+    if any((mensaje.author == bot.user,
+           not es_canal_escuchado(mensaje),
+           not mensaje_tiene_imagen(mensaje))):
+        return
+
+    await mensaje.channel.send(content="¿Querés guardarlo pibe?", view=ConfirmacionGuardar(), delete_after=120, reference=mensaje.to_reference())
 
 @bot.command(name='suma', aliases=['plus', '+'], help='suma dos enteros')
 async def suma(ctx, num1: int, num2: int) -> None:
@@ -62,24 +97,6 @@ async def cambiar_prefijo(ctx: Context, nuevo_prefijo: str) -> None:
 
     await ctx.channel.send(f'**[AVISO]** El prefijo de los comandos fue cambiado de `{prefijo_viejo}` a `{nuevo_prefijo}` exitosamente.', delete_after=30)
 
-@bot.command(name='prueba', help='Esto es una prueba')
-async def prueba(ctx: Context, *frase: str):
-    """
-    Esto es una prueba.
-    """
-    await ctx.channel.send(f'{ctx.author.mention} alias {ctx.author.name} con ID: {ctx.author.id}, Me dijiste: {" ".join(frase)}.', tts=True, mention_author=True)
-
-def tiene_subcarpetas(path_dir: str) -> bool:
-    """
-    Verifica si una carpetas tiene carpetas hijas.
-    """
-    
-    for elemento in os.listdir(path_dir):
-        if os.path.isdir(os.path.join(path_dir, elemento)):
-            return True
-
-    return False
-
 @bot.command(name='gimmeart', help='Manda una foto random')
 async def gimmemoreart(ctx: Context) -> None:
     """
@@ -87,9 +104,9 @@ async def gimmemoreart(ctx: Context) -> None:
     """
     path_archivo = IMAGES_PATH
 
-    while tiene_subcarpetas(path_archivo):
-        path_archivo = os.path.join(path_archivo, random.choice(os.listdir(path_archivo)))
-    foto_random = File(os.path.join(path_archivo, random.choice(os.listdir(path_archivo))))
+    while archivos.tiene_subcarpetas(path_archivo):
+        path_archivo = archivos.carpeta_random(path_archivo)
+    foto_random = File(archivos.archivo_random(path_archivo))
 
     await ctx.channel.send(content=f"Disfruta de tu porno, puerco de mierda {ctx.author.mention}", file=foto_random)
 
@@ -157,15 +174,36 @@ async def eliminar_channel(ctx: Context) -> None:
         archivos.guardar_json(dic_propiedades, PROPERTIES_FILE)
         await ctx.channel.send(f"El canal `{nombre_canal}` fue eliminado exitosamente, pa", delete_after=10)
 
+@bot.command(name='recomendar', aliases=['recommend'], help='Recomienda una nueva carpeta')
+async def recomendar_carpeta(ctx: Context, nombre_carpeta: str):
+    """
+    Agrega un nombre de carpeta a los candidatos de nuevas
+    carpetas a agregar.
+    """
+    dic_propiedades = archivos.cargar_json(PROPERTIES_FILE)
+    if nombre_carpeta not in dic_propiedades['carpetas_recomendadas']:
+        dic_propiedades['carpetas_recomendadas'].append(nombre_carpeta)
+        mensaje_a_mostrar = f"La carpeta {nombre_carpeta} fue recomendada rey!"
+    else:
+        mensaje_a_mostrar = "*Recomendado repetido pa*"
+    archivos.guardar_json(dic_propiedades, PROPERTIES_FILE)
 
-# @bot.command(name='download')
-# async def descargar(ctx):
-#     mensaje_referido = ctx.message.reference
-#     if mensaje_referido and mensaje_referido:
-#         mensaje_posta = await ctx.fetch_message(mensaje_referido.message_id)
+    await ctx.message.delete()
+    await ctx.channel.send(mensaje_a_mostrar, delete_after=10)
 
-#         if mensaje_posta.attachments:
-#             imagen = mensaje_posta.attachments[0]
-#             await imagen.save(f'{IMAGES_PATH}{imagen.filename}')
-
-#             await ctx.channel.send("exito")
+@bot.command(name="recomendados", aliases=['recommended'], help='Muestra las carpetas recomendadas')
+@has_role(DEV_ROLE_ID)
+async def mostrar_recomendados(ctx: Context):
+    """
+    Muestra una lista de los nombres de carpetas que son candidatos
+    a agregar.
+    """
+    dic_propiedades = archivos.cargar_json(PROPERTIES_FILE)
+    recomendadas = dic_propiedades['carpetas_recomendadas']
+    if recomendadas:
+        mensaje_a_imprimir = ">>> \t**Lista de Recomendaciones:**\n\n" + '\n'.join(f'\t-\t`{nombre}`' for nombre in recomendadas)
+    else:
+        mensaje_a_imprimir = "*No hay recomendaciones crack*"
+    
+    await ctx.message.delete()
+    await ctx.channel.send(content=f"{mensaje_a_imprimir}", delete_after=30)
