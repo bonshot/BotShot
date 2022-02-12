@@ -1,2 +1,2 @@
 python-dotenv
-git+https://github.com/Rapptz/discord.py
+git+https://github.com/Pycord-Development/pycord

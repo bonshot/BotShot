@@ -9,11 +9,11 @@ from dotenv import load_dotenv
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
 
-from botshot import bot
+from botshot import BotShot
 
 def main():
 
-    bot.run(TOKEN)
+    BotShot().run(TOKEN)
     return 0
 
 
