@@ -71,3 +71,10 @@ def tiene_subcarpetas(path_dir: str) -> bool:
             return True
 
     return False
+
+def partir_ruta(path_dir: str) -> tuple[str, str]:
+    """
+    Parte una ruta en la 'cola' de la ruta, y el resto.
+    """
+
+    return path.split(path_dir)
