@@ -3,15 +3,19 @@ Módulo principal, wrapper para todos los otros archivos.
 Para correr el Bot en sí.
 """
 
-import os
+from os import getenv
 from dotenv import load_dotenv
 
-load_dotenv()
-TOKEN = os.getenv('TOKEN')
+from .botshot import BotShot
 
-from botshot import BotShot
+load_dotenv()
+TOKEN = getenv('TOKEN')
+
 
 def main():
+    """
+    Función principal.
+    """
 
     BotShot().run(TOKEN)
     return 0

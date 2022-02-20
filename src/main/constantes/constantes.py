@@ -10,7 +10,7 @@ por primera vez a un server o cuando no es válida la opción querida.
 
 DEV_ROLE_ID = 925517040993861654
 
-PROPERTIES_FILE = 'src/propiedades.json'
+PROPERTIES_FILE = 'src/main/json/propiedades.json'
 
 IMAGES_PATH = 'images'
 
