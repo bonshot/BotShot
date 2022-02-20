@@ -3,12 +3,15 @@ Módulo para seleccionar una carpeta.
 """
 
 from typing import Optional
-from discord import SelectOption, Interaction, PartialEmoji as Emoji
-from discord.ui import Select, Button, View, button
-from discord.enums import ButtonStyle
 
-from archivos import partir_ruta, unir_ruta, lista_carpetas
-from constantes import IMAGES_PATH
+from discord import Interaction
+from discord import PartialEmoji as Emoji
+from discord import SelectOption
+from discord.enums import ButtonStyle
+from discord.ui import Button, Select, View, button
+
+from ..archivos import lista_carpetas, partir_ruta, unir_ruta
+from ..constantes import IMAGES_PATH
 
 
 class MenuCarpetas(Select):
@@ -33,11 +36,19 @@ class MenuCarpetas(Select):
         """
         self.path = ruta
 
-        opciones = [SelectOption(label=' '.join(carpeta.split('_')), value=carpeta) for carpeta in lista_rutas]
+        opciones = [SelectOption(label=' '.join(carpeta.split('_')), value=carpeta)
+                                for carpeta in lista_rutas]
 
-        super().__init__(custom_id=custom_id, placeholder=placeholder, min_values=min_values, max_values=max_values, options=opciones, disabled=disabled, row=row)
+        super().__init__(custom_id=custom_id,
+                         placeholder=placeholder,
+                         min_values=min_values,
+                         max_values=max_values,
+                         options=opciones,
+                         disabled=disabled,
+                         row=row)
 
-    async def callback(self, interaccion: Interaction) -> None:
+
+    async def callback(self, interaction: Interaction) -> None:
         """
         Procesa la opción elegida.
         """
@@ -46,23 +57,30 @@ class MenuCarpetas(Select):
         carpetas_actuales = lista_carpetas(self.path)
 
         if carpetas_actuales:
-            await interaccion.message.edit(content=f"Guardando en `{self.path}`", view=SelectorCarpeta(self.path))
+            await interaction.message.edit(content=f'Guardando en `{self.path}`',
+                                           view=SelectorCarpeta(self.path))
             return
 
-        mensaje_referido = interaccion.message.reference
+        mensaje_referido = interaction.message.reference
         if mensaje_referido:
-            mensaje = await interaccion.channel.fetch_message(mensaje_referido.message_id)
+            mensaje = await interaction.channel.fetch_message(mensaje_referido.message_id)
             if mensaje.attachments:
                 imagen = mensaje.attachments[0]
                 await imagen.save(unir_ruta(self.path, imagen.filename))
-                await interaccion.message.edit(content=f"Guardado en `{self.path}`, Goshujin-Sama <:ouiea:862131679073927229>", view=None, delete_after=10)
+                await interaction.message.edit(content=f'Guardado en `{self.path}`, ' +
+                                                        'Goshujin-Sama <:ouiea:862131679073927229>',
+                                               view=None,
+                                               delete_after=10)
 
 class SelectorCarpeta(View):
     """
     Clase para seleccionar la carpeta en donde guardar la imagen.
     """
 
-    def __init__(self, ruta: str=IMAGES_PATH, pagina: int=0, timeout: Optional[float]=120.0) -> None:
+    def __init__(self,
+                 ruta: str=IMAGES_PATH,
+                 pagina: int=0,
+                 timeout: Optional[float]=120.0) -> None:
         """
         Inicializa una instancia de 'SelectorCarpeta'.
         """
@@ -70,7 +88,9 @@ class SelectorCarpeta(View):
         self.ruta: str = ruta
         max_elementos: int = 20
         self.pagina: int = pagina
-        self.cantidad_elementos: int = (max_elementos if self.cantidad_rutas > max_elementos else self.cantidad_rutas)
+        self.cantidad_elementos: int = (max_elementos
+                                        if self.cantidad_rutas > max_elementos
+                                        else self.cantidad_rutas)
 
         self.menu_carpetas: Optional[MenuCarpetas] = None
         self.refrescar_menu()
@@ -101,7 +121,8 @@ class SelectorCarpeta(View):
         Esto se usa para bloquear botones de ser necesario.
         """
 
-        return (self.cantidad_rutas // self.cantidad_elementos) + (1 if self.cantidad_rutas % self.cantidad_elementos else 0)
+        return ((self.cantidad_rutas // self.cantidad_elementos) +
+                (1 if self.cantidad_rutas % self.cantidad_elementos else 0))
 
 
     def generar_menu(self) -> MenuCarpetas:
@@ -128,7 +149,8 @@ class SelectorCarpeta(View):
         """
         Refresca el mensaje con la vista nueva.
         """
-        await interaccion.message.edit(content=f"Guardando en `{self.ruta}`", view=self)
+        await interaccion.message.edit(content=f'Guardando en `{self.ruta}`',
+                                       view=self)
 
 
     def actualizar_boton(self, boton: Button) -> None:
@@ -138,7 +160,8 @@ class SelectorCarpeta(View):
 
         boton.disabled = any(((boton.custom_id == "go_back" and self.ruta == IMAGES_PATH),
                             (boton.custom_id == "pg_back" and self.pagina <= 0),
-                            (boton.custom_id == "pg_next" and self.pagina >= (self.max_paginas - 1))))
+                            (boton.custom_id == "pg_next" and self.pagina >= (self.max_paginas - 1))
+                             ))
 
 
     def actualizar_botones(self) -> None:
@@ -151,7 +174,11 @@ class SelectorCarpeta(View):
                 self.actualizar_boton(item)
 
 
-    @button(label="Volver", style=ButtonStyle.gray, custom_id="go_back", row=2, emoji=Emoji.from_str("\N{Leftwards Arrow with Hook}"))
+    @button(label="Volver",
+            style=ButtonStyle.gray,
+            custom_id="go_back",
+            row=2,
+            emoji=Emoji.from_str("\N{Leftwards Arrow with Hook}"))
     async def volver_anterior_carpeta(self, _boton: Button, interaccion: Interaction) -> None:
         """
         Vuelve a la carpeta anterior, si es posible.
@@ -162,7 +189,10 @@ class SelectorCarpeta(View):
         await self.refrescar_mensaje(interaccion)
 
 
-    @button(style=ButtonStyle.grey, custom_id="pg_back", row=2, emoji=Emoji.from_str("\N{Leftwards Black Arrow}"))
+    @button(style=ButtonStyle.grey,
+            custom_id="pg_back",
+            row=2,
+            emoji=Emoji.from_str("\N{Leftwards Black Arrow}"))
     async def pagina_anterior(self, _boton: Button, interaccion: Interaction) -> None:
         """
         Va a la página anterior.
@@ -172,7 +202,10 @@ class SelectorCarpeta(View):
         await self.refrescar_mensaje(interaccion)
 
 
-    @button(style=ButtonStyle.grey, custom_id="pg_next", row=2, emoji=Emoji.from_str("\N{Black Rightwards Arrow}"))
+    @button(style=ButtonStyle.grey,
+            custom_id="pg_next",
+            row=2,
+            emoji=Emoji.from_str("\N{Black Rightwards Arrow}"))
     async def pagina_siguiente(self, _boton: Button, interaccion: Interaction) -> None:
         """
         Va a la página siguiente.

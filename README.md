@@ -37,7 +37,7 @@ almacenarlas en un directorio designado acorde.
 
     - [python-dotenv](https://pypi.org/project/python-dotenv/)
 
-    - [discord.py](https://pypi.org/project/discord.py/) (rama `master`)
+    - [pycord](https://pypi.org/project/py-cord/) (rama `master`)
 
 * **[Licencia MIT](LICENSE)**
 
@@ -119,9 +119,9 @@ def pruebas() -> None:
     """
     Imprime algunas pruebas.
     """
-    print(f"Prueba 1:\t{MENSAJE_A_MOSTRAR}")
-    print(f"Prueba 2:\tTe veo. {MENSAJE_A_MOSTRAR}")
-    print(f"Prueba 3:\t{MENSAJE_A_MOSTRAR} ¿Cómo estás?")
+    print(f'Prueba 1:\t{MENSAJE_A_MOSTRAR}')
+    print(f'Prueba 2:\tTe veo. {MENSAJE_A_MOSTRAR}')
+    print(f'Prueba 3:\t{MENSAJE_A_MOSTRAR} ¿Cómo estás?')
 
 # Después
 
