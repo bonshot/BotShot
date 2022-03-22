@@ -2,14 +2,14 @@
 
 <img alt="calamardo_guapo.png" align="left" src="extra/img/references/handsome_squidward_rtx_circle.png" height=128 width=128 />
 
-<p align="left">
-<img alt="version" src="https://img.shields.io/badge/version-0.0.5-brightgreen" />
-<img alt="estrellas" src="https://img.shields.io/github/stars/bonshot/BotShot?label=Estrellas&style=social" />
-<img alt="estrellas" src="https://img.shields.io/github/watchers/bonshot/BotShot?label=Visitas&style=social" />
+![version](https://img.shields.io/badge/version-0.0.5-brightgreen)
+![estrellas](https://img.shields.io/github/stars/bonshot/BotShot?label=Estrellas&style=social)
+![visitas](https://img.shields.io/github/watchers/bonshot/BotShot?label=Visitas&style=social)
+![Tests](https://github.com/bonshot/BotShot/actions/workflows/tests.yml/badge.svg)
+![Pylint](https://github.com/bonshot/BotShot/actions/workflows/pylint.yml/badge.svg)
 
 Este bot está pensado para procesar imágenes ~~(en su mayoría +18)~~ y
 almacenarlas en un directorio designado acorde.
-</p>
 
 <br/>
 <br/>

@@ -26,6 +26,14 @@ class CogAdmin(CategoriaComandos):
             return False
 
 
+    async def cog_after_invoke(self, ctx: Context) -> None:
+        """
+        Borra los mensajes de admin después de un tiempo ejecutado
+        el comando.
+        """
+        await ctx.message.delete(delay=5.0)
+
+
     @command(name='prefix',
              aliases=['prefijo', 'pfx', 'px'],
              help='[ADMIN] Cambia el prefijo de los comandos.')
@@ -93,6 +101,6 @@ class CogAdmin(CategoriaComandos):
         Explora las carpetas, con posibilidad de borrar un directorio.
         """
 
-        await ctx.channel.send(f"Actualmente en `{IMAGES_PATH}`",
+        await ctx.channel.send(f'Actualmente en `{IMAGES_PATH}`',
                                view=DestructorCarpetas(),
                                delete_after=120.0)
