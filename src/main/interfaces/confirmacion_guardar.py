@@ -31,7 +31,7 @@ class ConfirmacionGuardar(View):
             emoji=Emoji.from_str("<:rule34:891890132737736734>"))
     async def confirmar_guardar(self, _boton: Button, interaction: Interaction) -> None:
         """
-        Confirma que se quiera guardar algo.
+        Confirma que se quiere guardar algo.
         """
         await interaction.message.edit(content=f'Guardando en `{IMAGES_PATH}`',
                                        view=SelectorCarpeta())
