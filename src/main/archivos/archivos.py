@@ -5,7 +5,7 @@ información persistente.
 
 from json import load, dump
 from random import choice
-from os import listdir, path
+from os import listdir, path, mkdir, rmdir
 
 DiccionarioPares = dict[str, str]
 
@@ -36,6 +36,30 @@ def unir_ruta(ruta: str, sub_ruta: str) -> str:
     """
 
     return path.join(ruta, sub_ruta)
+
+
+def partir_ruta(path_dir: str) -> tuple[str, str]:
+    """
+    Parte una ruta en la 'cola' de la ruta, y el resto.
+    """
+
+    return path.split(path_dir)
+
+
+def crear_dir(ruta: str) -> None:
+    """
+    Crea un nuevo directorio en la ruta especificada.
+    """
+
+    mkdir(ruta)
+
+
+def borrar_dir(ruta: str) -> None:
+    """
+    Intenta borrar el directorio especificado.
+    """
+
+    rmdir(ruta)
 
 
 def lista_carpetas(ruta: str) -> list[str]:
@@ -79,11 +103,3 @@ def tiene_subcarpetas(path_dir: str) -> bool:
             return True
 
     return False
-
-
-def partir_ruta(path_dir: str) -> tuple[str, str]:
-    """
-    Parte una ruta en la 'cola' de la ruta, y el resto.
-    """
-
-    return path.split(path_dir)

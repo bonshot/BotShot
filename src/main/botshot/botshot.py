@@ -5,7 +5,7 @@ Módulo dedicado a contener la lógica de una clase que sobrecarga a
 
 from asyncio import set_event_loop_policy
 from platform import system
-from typing import Callable
+from typing import Any, Callable, Dict
 
 from discord import Message
 from discord.ext.commands import Bot
@@ -49,6 +49,8 @@ class BotShot(Bot):
         self.add_cog(CogUsuarios(self))
         self.add_cog(CogImagenes(self))
         self.add_cog(CogEventos(self))
+
+        self.partidas_truco: Dict[str, Any] = {}
 
 
     @property

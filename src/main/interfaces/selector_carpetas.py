@@ -37,7 +37,7 @@ class MenuCarpetas(Select):
         self.path = ruta
 
         opciones = [SelectOption(label=' '.join(carpeta.split('_')), value=carpeta)
-                                for carpeta in lista_rutas]
+                                 for carpeta in lista_rutas]
 
         super().__init__(custom_id=custom_id,
                          placeholder=placeholder,
@@ -56,10 +56,28 @@ class MenuCarpetas(Select):
         self.path = unir_ruta(self.path, eleccion)
         carpetas_actuales = lista_carpetas(self.path)
 
-        if carpetas_actuales:
+        if await self.seguir(carpetas_actuales, interaction):
+            return
+
+        await self.guardar_img(interaction)
+
+
+    async def seguir(self, carpetas: list[str], interaction: Interaction) -> bool:
+        """
+        Cambia la vista por otra, y sigue navegando.
+        """
+
+        if carpetas:
             await interaction.message.edit(content=f'Guardando en `{self.path}`',
                                            view=SelectorCarpeta(self.path))
-            return
+            return True
+        return False
+
+
+    async def guardar_img(self, interaction: Interaction) -> None:
+        """
+        Deja de navegar y guarda la imagen especificada.
+        """
 
         mensaje_referido = interaction.message.reference
         if mensaje_referido:
@@ -71,6 +89,7 @@ class MenuCarpetas(Select):
                                                         'Goshujin-Sama <:ouiea:862131679073927229>',
                                                view=None,
                                                delete_after=10)
+
 
 class SelectorCarpeta(View):
     """
@@ -86,14 +105,23 @@ class SelectorCarpeta(View):
         """
         super().__init__(timeout=timeout)
         self.ruta: str = ruta
-        max_elementos: int = 20
         self.pagina: int = pagina
-        self.cantidad_elementos: int = (max_elementos
-                                        if self.cantidad_rutas > max_elementos
-                                        else self.cantidad_rutas)
 
         self.menu_carpetas: Optional[MenuCarpetas] = None
         self.refrescar_menu()
+
+
+    @property
+    def cantidad_elementos(self) -> int:
+        """
+        Devuelve la cantidad de elementos disponible en la pagina.
+        """
+
+        max_elementos: int = 20
+
+        return (max_elementos
+                if self.cantidad_rutas > max_elementos
+                else self.cantidad_rutas)
 
 
     @property
@@ -101,7 +129,6 @@ class SelectorCarpeta(View):
         """
         Calcula las carpetas que hay en la ruta actual.
         """
-
         return lista_carpetas(self.ruta)
 
 
@@ -110,7 +137,6 @@ class SelectorCarpeta(View):
         """
         Devuelve la cantidad de rutas disponibles.
         """
-
         return len(self.carpetas)
 
 
@@ -120,6 +146,9 @@ class SelectorCarpeta(View):
         Devuelve el límite de páginas a obedecer.
         Esto se usa para bloquear botones de ser necesario.
         """
+
+        if not self.cantidad_elementos:
+            return 0
 
         return ((self.cantidad_rutas // self.cantidad_elementos) +
                 (1 if self.cantidad_rutas % self.cantidad_elementos else 0))
