@@ -2,6 +2,7 @@
 Módulo que contiene una carta de tipo de naipes españoles.
 """
 
+from math import inf
 from random import randint
 from secrets import choice
 from typing import Optional
@@ -19,25 +20,11 @@ class Carta:
         Inicializa una instancia de 'Carta'.
         """
 
-        if not isinstance(num, Optional[int]):
-            raise TypeError("El número especificado no es un entero.")
+        self._num: int = None
+        self._palo: Palo = None
 
-        if num and (num < 1 or num > 12):
-            raise ValueError(f"Número {num} no válido. Debe ser un entero entre 1 y 12.")
-
-        if not isinstance(palo, Optional[Palo]):
-            raise TypeError("Palo especificado no válido.")
-
-        if not palo:
-            palo = choice(list(Palo))
-
-        if palo == Palo.COMODIN:
-            num = 13
-        elif not num:
-            num = randint(1, 12)
-
-        self._num: int = num
-        self._palo: Palo = palo
+        self.palo: Palo = palo
+        self.num: int = num
 
 
     def __str__(self) -> str:
@@ -60,6 +47,26 @@ class Carta:
         return self._num
 
 
+    @num.setter
+    def num(self, nuevo_num: Optional[int]) -> None:
+        """
+        Asigna un nuevo valor al numero de la carta.
+        """
+
+        if not isinstance(nuevo_num, Optional[int]):
+            raise TypeError("El número especificado no es un entero.")
+
+        if nuevo_num and (nuevo_num < 1 or nuevo_num > 12):
+            raise ValueError(f"Número {nuevo_num} no válido. Debe ser un entero entre 1 y 12.")
+
+        if self.palo == Palo.COMODIN:
+            nuevo_num = inf
+        elif not nuevo_num:
+            nuevo_num = randint(1, 12)
+
+        self._num: int = nuevo_num
+
+
     @property
     def palo(self) -> Palo:
         """
@@ -67,6 +74,21 @@ class Carta:
         """
 
         return self._palo
+
+
+    @palo.setter
+    def palo(self, nuevo_palo: Optional[Palo]) -> None:
+        """
+        Asigna un nuevo valor al palo de la carta.
+        """
+
+        if not isinstance(nuevo_palo, Optional[Palo]):
+            raise TypeError("Palo especificado no válido.")
+
+        if not nuevo_palo:
+            nuevo_palo = choice(list(Palo))
+
+        self._palo = nuevo_palo
 
 
     def mismo_num(self, otra: "Carta") -> bool:
@@ -85,13 +107,12 @@ class Carta:
         return self.palo == otra.palo
 
 
-    @staticmethod
-    def es_comodin(carta: "Carta") -> bool:
+    def es_comodin(self) -> bool:
         """
         Verifica si esta carta es un comodin.
         """
 
-        return carta.palo == Palo.COMODIN
+        return self.palo == Palo.COMODIN
 
 
     def compatible(self, otra: "Carta") -> bool:
@@ -100,7 +121,7 @@ class Carta:
         Los comodines son automáticamente compatibles con cualquier otra carta.
         """
 
-        return any((Carta.es_comodin(self), Carta.es_comodin(otra),
+        return any((self.es_comodin(), otra.es_comodin(),
                     self.mismo_num(otra), self.mismo_palo(otra)))
 
 

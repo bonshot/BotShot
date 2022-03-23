@@ -2,11 +2,12 @@
 Módulo que contiene un mazo de cartas.
 """
 
-from queue import SimpleQueue as Cola
+from collections import deque as Cola
+from copy import deepcopy
 from random import shuffle
+from typing import Dict, Union
 
-from .naipe_espaniol import Carta
-from .palo_carta import Palo
+from ..carta import Carta, Palo
 
 
 class Mazo:
@@ -23,7 +24,6 @@ class Mazo:
         """
 
         self._cola: Cola[Carta] = Cola()
-
         temp_list: list = []
 
         for palo in Palo:
@@ -44,7 +44,7 @@ class Mazo:
 
         shuffle(temp_list)
         while temp_list:
-            self._cola.put(temp_list.pop())
+            self.cola.appendleft(temp_list.pop())
 
 
     @property
@@ -61,7 +61,7 @@ class Mazo:
         Encola una carta.
         """
 
-        self.cola.put(carta)
+        self.cola.appendleft(carta)
 
 
     def get(self) -> Carta:
@@ -69,7 +69,7 @@ class Mazo:
         Desencola una carta.
         """
 
-        return self.cola.get()
+        return self.cola.pop()
 
 
     def vacio(self) -> bool:
@@ -77,4 +77,33 @@ class Mazo:
         Verifica si el mazo está vacía.
         """
 
-        return self.cola.empty()
+        return not self.cola
+
+
+    def __len__(self) -> int:
+        """
+        Cuenta la cantidad de elementos en la cola.
+        """
+
+        return len(self.cola)
+
+
+    def contar_cartas(self) -> Dict[Union[int, str], int]:
+        """
+        Desencola un mazo entero y devuelve un diccionario con
+        las estadísticas de este.
+        """
+
+        mazo = deepcopy(self)
+        stats: Dict[Union[int, str], int] = {}
+
+        for key in list(range(1, 13)) + [palo.value for palo in Palo]:
+            stats[key] = 0
+
+        while not mazo.vacio():
+            carta = mazo.get()
+            stats[carta.palo.value] += 1
+            if not carta.es_comodin():
+                stats[carta.num] += 1
+
+        return stats

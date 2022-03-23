@@ -4,6 +4,7 @@ Módulo que contiene la lógica de una partida de Truco.
 
 from time import time
 
+
 class PartidaTruco:
     """
     Clase para albergar la lógica de una partida de Truco.
