@@ -2,7 +2,7 @@
 
 <img alt="calamardo_guapo.png" align="left" src="extra/img/references/handsome_squidward_rtx_circle.png" height=128 width=128 />
 
-![version](https://img.shields.io/badge/version-0.0.5-brightgreen)
+![version](https://img.shields.io/badge/version-0.0.9-brightgreen)
 ![estrellas](https://img.shields.io/github/stars/bonshot/BotShot?label=Estrellas&style=social)
 ![visitas](https://img.shields.io/github/watchers/bonshot/BotShot?label=Visitas&style=social)
 ![Tests](https://github.com/bonshot/BotShot/actions/workflows/tests.yml/badge.svg)
@@ -33,15 +33,36 @@ almacenarlas en un directorio designado acorde.
 
 * **[Enlace de Invitación]()**
 
+* **[Cómo Ejecutar](#cómo-ejecutar)**
+
 * **[Dependencias](requirements.txt)**
 
     - [python-dotenv](https://pypi.org/project/python-dotenv/)
 
-    - [pycord](https://pypi.org/project/py-cord/) (rama `master`)
+    - [discord.py](https://pypi.org/project/discord.py/) (rama `master`)
 
 * **[Licencia MIT](LICENSE)**
 
 * **[Cómo contribuir y Convenciones usadas](CONTRIBUTING.MD)**
+
+<hr style="height:1px; width:35%" />
+
+## Cómo Ejecutar
+
+Primero hay que pararse dentro de la carpeta [`run`](run), o de la carpeta raíz, y ejecutar uno de los dos
+archivos presentes en [`run`](run), según el Sistema Operativo.
+
+### **Ejemplos:**
+```bat
+@REM para Windows
+cd run
+./run.bat
+```
+```sh
+# para Linux u otro entorno de shell
+cd run
+./run.sh
+```
 
 <hr style="height:3px; width:50%" />
 <br/>

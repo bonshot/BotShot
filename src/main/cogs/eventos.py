@@ -2,6 +2,8 @@
 Cog para el handler de navegador de carpetas.
 """
 
+from typing import TYPE_CHECKING
+
 from discord import Guild, Message
 from discord.ext.commands import Cog, Context
 
@@ -10,6 +12,10 @@ from ..checks import es_canal_escuchado, mensaje_tiene_imagen
 from ..constantes import DEFAULT_PREFIX, PROPERTIES_FILE
 from ..interfaces import ConfirmacionGuardar
 from .categoria_comandos import CategoriaComandos
+
+if TYPE_CHECKING:
+
+    from ..botshot import BotShot
 
 
 class CogEventos(CategoriaComandos):
@@ -74,3 +80,11 @@ class CogEventos(CategoriaComandos):
         Escucha si se completó el comando escrito.
         """
         self.bot.log.info(f'{ctx.author} ha invocado "{ctx.command}" satisfactoriamente')
+
+
+async def setup(bot: "BotShot"):
+    """
+    Agrega el cog de este módulo a BotShot.
+    """
+
+    await bot.add_cog(CogEventos(bot))

@@ -6,6 +6,7 @@ información persistente.
 from json import load, dump
 from random import choice
 from os import listdir, path, mkdir, rmdir
+from typing import List, Optional
 
 DiccionarioPares = dict[str, str]
 
@@ -76,6 +77,19 @@ def lista_archivos(ruta: str) -> list[str]:
     de una ruta indicada.
     """
     return [file for file in listdir(ruta) if not path.isdir(unir_ruta(ruta, file))]
+
+
+def get_nombre_archivos(ruta: str, ext: Optional[str]=None) -> List[str]:
+    """
+    Busca en la ruta especificada si hay archivos, y devuelve una lista
+    con los nombres de los que encuentre.
+
+    Si `ext` no es `None`, entonces probará buscando archivos con esa extensión.
+    `ext` NO debe tener un punto (`.`) adelante, es decir que `"py"` será automáticamente
+    tratado como `.py`.
+    """
+
+    return [file for file in listdir(ruta) if (file.endswith(f".{ext}") if ext else True)]
 
 
 def carpeta_random(ruta: str) -> str:

@@ -208,7 +208,7 @@ class SelectorCarpeta(View):
             custom_id="go_back",
             row=2,
             emoji=Emoji.from_str("\N{Leftwards Arrow with Hook}"))
-    async def volver_anterior_carpeta(self, _boton: Button, interaccion: Interaction) -> None:
+    async def volver_anterior_carpeta(self, interaccion: Interaction, _boton: Button) -> None:
         """
         Vuelve a la carpeta anterior, si es posible.
         """
@@ -222,7 +222,7 @@ class SelectorCarpeta(View):
             custom_id="pg_back",
             row=2,
             emoji=Emoji.from_str("\N{Leftwards Black Arrow}"))
-    async def pagina_anterior(self, _boton: Button, interaccion: Interaction) -> None:
+    async def pagina_anterior(self, interaccion: Interaction, _boton: Button) -> None:
         """
         Va a la página anterior.
         """
@@ -235,7 +235,7 @@ class SelectorCarpeta(View):
             custom_id="pg_next",
             row=2,
             emoji=Emoji.from_str("\N{Black Rightwards Arrow}"))
-    async def pagina_siguiente(self, _boton: Button, interaccion: Interaction) -> None:
+    async def pagina_siguiente(self, interaccion: Interaction, _boton: Button) -> None:
         """
         Va a la página siguiente.
         """

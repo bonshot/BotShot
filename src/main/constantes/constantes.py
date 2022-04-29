@@ -12,6 +12,16 @@ BOT_TOKEN = getenv('TOKEN')
 El token usado para logear el bot.
 """
 
+BOT_VERSION = "0.0.9"
+"""
+La versión de BotShot.
+"""
+
+BOT_ID = 123456789
+"""
+El ID único de BotShot.
+"""
+
 DEFAULT_PREFIX = '.'
 """
 El prefijo por defecto, que se asigna cuando el bot ingresa
@@ -28,5 +38,7 @@ PROPERTIES_FILE = 'src/main/json/propiedades.json'
 STATS_FILE = 'src/main/json/stats.json'
 
 IMAGES_PATH = 'images'
+
+COGS_PATH = "src/main/cogs"
 
 LOG_PATH = 'botshot.log'

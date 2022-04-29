@@ -2,11 +2,17 @@
 Cog para comandos extras de usuarios.
 """
 
+from typing import TYPE_CHECKING
+
 from discord.ext.commands import Context, command, has_role
 
 from ..archivos import cargar_json, guardar_json
 from ..constantes import DEV_ROLE_ID, PROPERTIES_FILE
 from .categoria_comandos import CategoriaComandos
+
+if TYPE_CHECKING:
+
+    from ..botshot import BotShot
 
 
 class CogUsuarios(CategoriaComandos):
@@ -53,3 +59,11 @@ class CogUsuarios(CategoriaComandos):
 
         await ctx.message.delete()
         await ctx.channel.send(content=mensaje_a_imprimir, delete_after=30)
+
+
+async def setup(bot: "BotShot"):
+    """
+    Agrega el cog de este módulo a BotShot.
+    """
+
+    await bot.add_cog(CogUsuarios(bot))

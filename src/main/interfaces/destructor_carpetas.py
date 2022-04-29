@@ -107,7 +107,7 @@ class DestructorCarpetas(SelectorCarpeta):
             custom_id="del_dir",
             row=2,
             emoji=Emoji.from_str("\N{Heavy Multiplication X}"))
-    async def crear_carpeta(self, _boton: Button, interaccion: Interaction) -> None:
+    async def crear_carpeta(self, interaccion: Interaction, _boton: Button) -> None:
         """
         Pregunta si se desea borrar la carpeta deseada.
         """

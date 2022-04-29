@@ -2,12 +2,18 @@
 Cog que agrupa comandos administrativos.
 """
 
+from typing import TYPE_CHECKING
+
 from discord.ext.commands import Context, command
 
 from ..archivos import cargar_json, guardar_json, unir_ruta
 from ..constantes import DEV_ROLE_ID, IMAGES_PATH, PROPERTIES_FILE
 from ..interfaces import CreadorCarpetas, DestructorCarpetas
 from .categoria_comandos import CategoriaComandos
+
+if TYPE_CHECKING:
+
+    from ..botshot import BotShot
 
 
 class CogAdmin(CategoriaComandos):
@@ -104,3 +110,11 @@ class CogAdmin(CategoriaComandos):
         await ctx.channel.send(f'Actualmente en `{IMAGES_PATH}`',
                                view=DestructorCarpetas(),
                                delete_after=120.0)
+
+
+async def setup(bot: "BotShot"):
+    """
+    Agrega el cog de este módulo a BotShot.
+    """
+
+    await bot.add_cog(CogAdmin(bot))

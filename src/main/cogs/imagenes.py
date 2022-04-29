@@ -2,12 +2,18 @@
 Cog para manejar imágenes.
 """
 
+from typing import TYPE_CHECKING
+
 from discord import File
 from discord.ext.commands import Context, command
 
 from ..archivos import archivo_random, carpeta_random, tiene_subcarpetas
 from ..constantes import IMAGES_PATH
 from .categoria_comandos import CategoriaComandos
+
+if TYPE_CHECKING:
+
+    from ..botshot import BotShot
 
 
 class CogImagenes(CategoriaComandos):
@@ -30,3 +36,11 @@ class CogImagenes(CategoriaComandos):
         await ctx.channel.send(content='Disfruta de tu porno, puerco de mierda ' +
                                        f'{ctx.author.mention}',
                                file=foto_random)
+
+
+async def setup(bot: "BotShot"):
+    """
+    Agrega el cog de este módulo a BotShot.
+    """
+
+    await bot.add_cog(CogImagenes(bot))

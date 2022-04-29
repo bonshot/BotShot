@@ -2,12 +2,18 @@
 Cog que agrupa comandos para los canales.
 """
 
+from typing import TYPE_CHECKING
+
 from discord.ext.commands import Context, command, has_role
 
 from ..archivos import cargar_json, guardar_json
 from ..auxiliares import conseguir_id_canal
 from ..constantes import DEV_ROLE_ID, PROPERTIES_FILE
 from .categoria_comandos import CategoriaComandos
+
+if TYPE_CHECKING:
+
+    from ..botshot import BotShot
 
 
 class CogCanales(CategoriaComandos):
@@ -87,3 +93,11 @@ class CogCanales(CategoriaComandos):
             guardar_json(dic_propiedades, PROPERTIES_FILE)
             await ctx.channel.send(f'El canal `{nombre_canal}` fue eliminado exitosamente, pa',
                                    delete_after=10)
+
+
+async def setup(bot: "BotShot"):
+    """
+    Agrega el cog de este módulo a BotShot.
+    """
+
+    await bot.add_cog(CogCanales(bot))

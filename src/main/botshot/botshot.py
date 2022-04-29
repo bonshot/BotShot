@@ -7,12 +7,12 @@ from asyncio import set_event_loop_policy
 from platform import system
 from typing import Any, Callable, Dict
 
-from discord import Message
+from discord import Intents, Message
 from discord.ext.commands import Bot
 
+from ..archivos import get_nombre_archivos
 from ..auxiliares import get_prefijo
-from ..cogs import (CogAdmin, CogCanales, CogEventos, CogImagenes, CogPruebas,
-                    CogUsuarios)
+from ..constantes import BOT_ID, COGS_PATH
 from ..logger import BotLogger
 
 # Para que no tire error en Windows al cerrar el Bot.
@@ -36,21 +36,47 @@ class BotShot(Bot):
     Clase que sobrecarga al Bot de discord.
     """
 
-
-    def __init__(self, cmd_prefix: PrefixCallable=get_prefijo, **opciones):
+    @staticmethod
+    def intents_botshot() -> Intents:
         """
-        Instancia 'BotShot'.
+        Devuelve los intents específicos para BotShot.
         """
-        super().__init__(cmd_prefix, options=opciones)
 
-        self.add_cog(CogPruebas(self))
-        self.add_cog(CogCanales(self))
-        self.add_cog(CogAdmin(self))
-        self.add_cog(CogUsuarios(self))
-        self.add_cog(CogImagenes(self))
-        self.add_cog(CogEventos(self))
+        intents = Intents.default()
+        intents.message_content = True # pylint: disable=assigning-non-slot
+
+        return intents
+
+
+    def __init__(self,
+                 cmd_prefix: PrefixCallable=get_prefijo,
+                 **opciones) -> None:
+        """
+        Inicializa una instancia de 'BotShot'.
+        """
+        super().__init__(cmd_prefix,
+                         intents=BotShot.intents_botshot(),
+                         application_id=BOT_ID,
+                         options=opciones)
 
         self.partidas_truco: Dict[str, Any] = {}
+
+
+    async def setup_hook(self) -> None:
+        """
+        Reliza acciones iniciales que el bot necesita.
+        """
+
+        ext = "py"
+
+        for cog_name in get_nombre_archivos(COGS_PATH, ext=ext):
+            if cog_name == "__init__.py":
+                continue
+
+            await self.load_extension(f".{cog_name.removesuffix(f'.{ext}')}",
+                                      package="src.main.cogs")
+
+        await self.tree.sync()
 
 
     @property
