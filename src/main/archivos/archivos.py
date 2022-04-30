@@ -5,7 +5,8 @@ información persistente.
 
 from json import load, dump
 from random import choice
-from os import listdir, path
+from os import listdir, path, mkdir, rmdir
+from typing import List, Optional
 
 DiccionarioPares = dict[str, str]
 
@@ -38,6 +39,30 @@ def unir_ruta(ruta: str, sub_ruta: str) -> str:
     return path.join(ruta, sub_ruta)
 
 
+def partir_ruta(path_dir: str) -> tuple[str, str]:
+    """
+    Parte una ruta en la 'cola' de la ruta, y el resto.
+    """
+
+    return path.split(path_dir)
+
+
+def crear_dir(ruta: str) -> None:
+    """
+    Crea un nuevo directorio en la ruta especificada.
+    """
+
+    mkdir(ruta)
+
+
+def borrar_dir(ruta: str) -> None:
+    """
+    Intenta borrar el directorio especificado.
+    """
+
+    rmdir(ruta)
+
+
 def lista_carpetas(ruta: str) -> list[str]:
     """
     Devuelve una lista de todas las carpetas que haya en la ruta
@@ -52,6 +77,19 @@ def lista_archivos(ruta: str) -> list[str]:
     de una ruta indicada.
     """
     return [file for file in listdir(ruta) if not path.isdir(unir_ruta(ruta, file))]
+
+
+def get_nombre_archivos(ruta: str, ext: Optional[str]=None) -> List[str]:
+    """
+    Busca en la ruta especificada si hay archivos, y devuelve una lista
+    con los nombres de los que encuentre.
+
+    Si `ext` no es `None`, entonces probará buscando archivos con esa extensión.
+    `ext` NO debe tener un punto (`.`) adelante, es decir que `"py"` será automáticamente
+    tratado como `.py`.
+    """
+
+    return [file for file in listdir(ruta) if (file.endswith(f".{ext}") if ext else True)]
 
 
 def carpeta_random(ruta: str) -> str:
@@ -79,11 +117,3 @@ def tiene_subcarpetas(path_dir: str) -> bool:
             return True
 
     return False
-
-
-def partir_ruta(path_dir: str) -> tuple[str, str]:
-    """
-    Parte una ruta en la 'cola' de la ruta, y el resto.
-    """
-
-    return path.split(path_dir)

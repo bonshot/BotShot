@@ -29,9 +29,9 @@ class ConfirmacionGuardar(View):
             style=ButtonStyle.green,
             custom_id="confirm",
             emoji=Emoji.from_str("<:rule34:891890132737736734>"))
-    async def confirmar_guardar(self, _boton: Button, interaction: Interaction) -> None:
+    async def confirmar_guardar(self, interaction: Interaction, _boton: Button) -> None:
         """
-        Confirma que se quiera guardar algo.
+        Confirma que se quiere guardar algo.
         """
         await interaction.message.edit(content=f'Guardando en `{IMAGES_PATH}`',
                                        view=SelectorCarpeta())
@@ -41,7 +41,7 @@ class ConfirmacionGuardar(View):
             style=ButtonStyle.red,
             custom_id="cancel",
             emoji=Emoji.from_str("<:pepeoi:889008419242119219>"))
-    async def cancelar_guardar(self, _boton: Button, interaction: Interaction) -> None:
+    async def cancelar_guardar(self, interaction: Interaction, _boton: Button) -> None:
         """
         Cancela la guardación.
         """
