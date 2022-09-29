@@ -65,9 +65,9 @@ class MenuCreadorCarpetas(MenuCarpetas):
         Cambia la vista por otra, y sigue navegando.
         """
 
-        await interaction.message.edit(content="Creando como " +
-                                                f"`{unir_ruta(self.path, self.nombre)}`",
-                                        view=CreadorCarpetas(self.nombre, self.path))
+        await interaction.response.edit_message(content="Creando como " +
+                                                        f"`{unir_ruta(self.path, self.nombre)}`",
+                                                view=CreadorCarpetas(self.nombre, self.path))
         return True
 
 
@@ -87,6 +87,15 @@ class CreadorCarpetas(SelectorCarpeta):
 
         self.nombre: str = nombre_carpeta
         super().__init__(ruta, pagina, timeout)
+
+
+    @property
+    def mensaje_refrescar(self) -> str:
+        """
+        El string que se muestra al refrescar el mensaje.
+        """
+
+        return f"Creando como `{unir_ruta(self.ruta, self.nombre)}`"
 
 
     def generar_menu(self) -> MenuCreadorCarpetas:
@@ -111,35 +120,24 @@ class CreadorCarpetas(SelectorCarpeta):
                                    placeholder=placeholder)
 
 
-    async def refrescar_mensaje(self, interaccion: Interaction) -> None:
-        """
-        Refresca el mensaje con la vista nueva.
-        """
-        await interaccion.message.edit(content="Creando como " +
-                                               f"`{unir_ruta(self.ruta, self.nombre)}`",
-                                       view=self)
-
-
     @button(label="Crear",
             style=ButtonStyle.grey,
             custom_id="new_dir",
             row=2,
-            emoji=Emoji.from_str("\N{White Heavy Check Mark}"))
+            emoji=Emoji.from_str("\U00002705"))
     async def crear_carpeta(self, interaccion: Interaction, _boton: Button) -> None:
         """
         Crea definitivamente la carpeta deseada.
         """
 
-        await self.refrescar_mensaje(interaccion)
         if self.nombre in self.carpetas:
             msg = (interaccion.message.content + "\n\nMe da que no, capo. " +
                    f"El nombre `{self.nombre}` está repetido y ya está creado.")
-            await interaccion.message.edit(content=msg,
-                                           view=self,
-                                           delete_after=10.0)
+            await interaccion.response.edit_message(content=msg,
+                                                    view=self)
             return
 
-        crear_dir(unir_ruta(self.ruta, self.nombre))
-        await interaccion.message.edit(content=f"Directorio `{self.ruta}` creado, pa.",
-                                       view=None,
-                                       delete_after=10.0)
+        ruta_definitiva = unir_ruta(self.ruta, self.nombre)
+        crear_dir(ruta_definitiva)
+        await interaccion.response.edit_message(content=f"Directorio `{ruta_definitiva}` creado, pa.",
+                                                view=None)

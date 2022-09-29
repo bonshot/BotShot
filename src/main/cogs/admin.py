@@ -2,21 +2,25 @@
 Cog que agrupa comandos administrativos.
 """
 
+from os import execl
+from sys import executable as sys_executable
 from typing import TYPE_CHECKING
 
-from discord.ext.commands import Context, command
+from discord import Interaction
+from discord.app_commands import command as appcommand
+from discord.app_commands import describe
+from discord.ext.commands import Context
 
-from ..archivos import cargar_json, guardar_json, unir_ruta
-from ..constantes import DEV_ROLE_ID, IMAGES_PATH, PROPERTIES_FILE
-from ..interfaces import CreadorCarpetas, DestructorCarpetas
-from .categoria_comandos import CategoriaComandos
+from ..archivos import cargar_json, guardar_json
+from ..constantes import DEV_ROLE_ID, LOG_PATH, PROPERTIES_FILE
+from .cog_abc import _CogABC
 
 if TYPE_CHECKING:
 
     from ..botshot import BotShot
 
 
-class CogAdmin(CategoriaComandos):
+class CogAdmin(_CogABC):
     """
     Cog para comandos administrativos.
     """
@@ -40,76 +44,115 @@ class CogAdmin(CategoriaComandos):
         await ctx.message.delete(delay=5.0)
 
 
-    @command(name='prefix',
-             aliases=['prefijo', 'pfx', 'px'],
-             help='[ADMIN] Cambia el prefijo de los comandos.')
-    async def cambiar_prefijo(self, ctx: Context, nuevo_prefijo: str) -> None:
+    @appcommand(name='prefix',
+                description='[ADMIN] Cambia el prefijo de los comandos.')
+    @describe(nuevo_prefijo="El nuevo prefijo a usar en este servidor.")
+    async def cambiar_prefijo(self, interaccion: Interaction, nuevo_prefijo: str) -> None:
         """
-        Cambia el prefijo utilizado para convocar a los comandos, solamente del
-        servidor de donde el comando fue escrito.
-
-        Se da por hecho que el servidor ya está memorizado en el diccionario.
+        Cambia el prefijo utilizado para convocar a los comandos de texto,
+        solamente del servidor de donde este comando fue invocado.
         """
-        prefijo_viejo = ctx.prefix
+        guild_id = interaccion.guild.id
+        dic_propiedades = cargar_json(PROPERTIES_FILE)
+        prefijo_viejo = dic_propiedades['prefijos'][str(guild_id)]
 
         if prefijo_viejo == nuevo_prefijo:
-
-            await ctx.channel.send(f'Cariño, `{nuevo_prefijo}` *ya es* el prefijo ' +
-                                    'para este server.',
-                                   delete_after=10)
+            await interaccion.response.send_message(f'Cariño, `{nuevo_prefijo}` *ya es* el prefijo ' +
+                                                    'para este server.',
+                                                    ephemeral=True)
             return
 
-        dic_propiedades = cargar_json(PROPERTIES_FILE)
-        dic_propiedades['prefijos'][str(ctx.guild.id)] = nuevo_prefijo
+        
+        dic_propiedades['prefijos'][str(guild_id)] = nuevo_prefijo
         guardar_json(dic_propiedades, PROPERTIES_FILE)
 
-        await ctx.channel.send('**[AVISO]** El prefijo de los comandos fue cambiado de ' +
-                               f'`{prefijo_viejo}` a `{nuevo_prefijo}` exitosamente.',
-                               delete_after=30)
+        await interaccion.response.send_message('**[AVISO]** El prefijo de los comandos fue cambiado de ' +
+                                                f'`{prefijo_viejo}` a `{nuevo_prefijo}` exitosamente.',
+                                                ephemeral=True)
+        self.bot.log.info(f'El prefijo en {interaccion.guild.name!r} fue cambiado de ' +
+                          f'{prefijo_viejo!r} a {nuevo_prefijo!r} exitosamente.')
 
 
-    @command(name='shutdown',
-             aliases=['apagar'],
-             help='[ADMIN] Apaga el Bot.',
-             hidden=True)
-    async def apagar_bot(self, ctx: Context) -> None:
+    @appcommand(name="flush",
+                description="[ADMIN] Vacía el log.")
+    async def logflush(self, interaccion: Interaction):
+        """
+        Vacía el archivo de registros.
+        """
+
+        with open(LOG_PATH, mode='w', encoding="utf-8"):
+            await interaccion.response.send_message("**[INFO]** Vaciando el log en " +
+                                                    f"`{LOG_PATH}`...",
+                                                    ephemeral=True)
+
+
+    @appcommand(name="reboot",
+                description="[ADMIN] Reinicia el bot.")
+    async def reboot(self, interaccion: Interaction) -> None:
+        """
+        Reinicia el bot, apagándolo y volviéndolo a conectar.
+        """
+
+        if not sys_executable:
+
+            mensaje = "[ERROR] No se pudo reiniciar el lector."
+
+            await interaccion.response.send_message(content=mensaje,
+                                                    ephemeral=True)
+            self.bot.log.error(mensaje)
+            return
+
+        mensaje = f"Reiniciando bot **{str(self.bot.user)}...**"
+
+        await interaccion.response.send_message(content=mensaje,
+                                                ephemeral=True)
+        self.bot.log.info(mensaje)
+
+        execl(sys_executable, sys_executable, "-m", "src.main.main")
+
+
+    @appcommand(name='shutdown',
+                description='[ADMIN] Apaga el Bot.')
+    async def apagar_bot(self, interaccion: Interaction) -> None:
         """
         Cierra el Bot de manera correcta.
         """
-        self.bot.log.info("¡Cerrando el Bot!")
-        await ctx.message.delete()
+        adios = "¡Cerrando el Bot!"
+        await interaccion.response.send_message(content=adios,
+                                                ephemeral=True)
+        self.bot.log.info(adios)
         await self.bot.close()
 
 
-    @command(name='mkdir',
-             aliases=['addfd', 'nuevacarpeta'],
-             help='[ADMIN] Crea una nueva carpeta.')
-    async def crear_carpeta(self, ctx: Context, *nombre) -> None:
+    @appcommand(name="uptime",
+                description="[ADMIN] Calcula el tiempo que BotShot estuvo activo.")
+    async def calculate_uptime(self, interaccion: Interaction) -> None:
         """
-        Crea una nueva carpeta en un directorio a elección.
-        """
-        if not nombre:
-            await ctx.channel.send("**[ERROR]** Nombre de carpeta vacío.", delete_after=10.0)
-            self.bot.log.error("Nombre de carpeta no válido (nombre vacío)")
-            return
-
-        nombre = '_'.join(nombre)
-        await ctx.channel.send(f"Creando como `{unir_ruta(IMAGES_PATH, nombre)}`",
-                               view=CreadorCarpetas(nombre_carpeta=nombre),
-                               delete_after=120.0)
-
-
-    @command(name='rmdir',
-             aliases=['delfd', 'borrarcarpeta'],
-             help='[ADMIN] Borra una carpeta.')
-    async def borrar_carpeta(self, ctx: Context) -> None:
-        """
-        Explora las carpetas, con posibilidad de borrar un directorio.
+        Calcula el tiempo de actividad de BotShot.
         """
 
-        await ctx.channel.send(f'Actualmente en `{IMAGES_PATH}`',
-                               view=DestructorCarpetas(),
-                               delete_after=120.0)
+        delta = self.bot.uptime
+
+        dias = (f"`{delta.days}` día/s" if delta.days > 9 else "")
+
+        horas_posibles = (delta.seconds // 3600)
+        horas = (f"`{horas_posibles}` hora/s" if horas_posibles > 0 else "")
+
+        minutos_posibles = (delta.seconds // 60)
+        minutos = (f"`{minutos_posibles}` minuto/s" if minutos_posibles > 0 else "")
+
+        segundos_posibles = (delta.seconds % 60)
+        segundos = (f"`{segundos_posibles}` segundo/s" if segundos_posibles > 0 else "")
+
+        tiempo = [tmp for tmp in [dias, horas, minutos, segundos] if tmp]
+        if len(tiempo) > 1:
+            last = tiempo.pop()
+            tiempo[-1] = f"{tiempo[-1]} y {last}"
+
+
+        await interaccion.response.send_message(f"***{self.bot.user}** estuvo activo por " +
+                                                f"{', '.join(tiempo)}.*",
+                                                ephemeral=True)
 
 
 async def setup(bot: "BotShot"):

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from ..botshot import BotShot
 
 
-class CategoriaComandos(Cog):
+class _CogABC(Cog):
     """
     Cog general para que se herede de él.
     """
@@ -21,3 +21,10 @@ class CategoriaComandos(Cog):
         Inicializa una instancia 'CategoriaComandos'.
         """
         self.bot: "BotShot" = bot
+
+
+async def setup(bot: "BotShot"):
+    """
+    Esta función está sólo por compatibilidad. No hace nada.
+    """
+    ...

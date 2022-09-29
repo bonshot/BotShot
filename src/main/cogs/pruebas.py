@@ -4,29 +4,32 @@ Cog de comandos para hacer pruebas.
 
 from typing import TYPE_CHECKING
 
-from discord.ext.commands import Context, command
+from discord import Interaction
+from discord.app_commands import command as appcommand
+from discord.app_commands import describe
 
-from .categoria_comandos import CategoriaComandos
+from .cog_abc import _CogABC
 
 if TYPE_CHECKING:
 
     from ..botshot import BotShot
 
 
-class CogPruebas(CategoriaComandos):
+class CogPruebas(_CogABC):
     """
     Cog para comandos de pruebas.
     """
 
-    @command(name='suma',
-             aliases=['plus', '+'],
-             help='[PRUEBA] suma dos enteros')
-    async def suma(self, ctx: Context, num1: int, num2: int) -> None:
+    @appcommand(name='suma',
+                description='[PRUEBA] Suma dos números enteros.')
+    @describe(x="Primer número a sumar.",
+              y="Segundo número a sumar.")
+    async def suma(self, interaccion: Interaction, x: int, y: int) -> None:
         """
         Suma dos enteros y envía por el canal el resultado.
         """
 
-        await ctx.send(f'{num1} + {num2} = {num1 + num2}')
+        await interaccion.response.send_message(f'{x} + {y} = {x + y}')
 
 
 async def setup(bot: "BotShot"):

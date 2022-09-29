@@ -14,9 +14,11 @@ def es_canal_escuchado(mensaje: Message):
     Devuelve 'True' si se está en un canal escuchado.
     Si no, devuelve 'False'.
     """
+    guild_actual = str(mensaje.guild.id)
     canal_actual = str(mensaje.channel.id)
     dic_propiedades = cargar_json(PROPERTIES_FILE)
-    return canal_actual in dic_propiedades['canales_escuchables']
+    return (guild_actual in dic_propiedades['canales_escuchables']
+            and canal_actual in dic_propiedades['canales_escuchables'][guild_actual])
 
 
 def mensaje_tiene_imagen(mensaje: Message):

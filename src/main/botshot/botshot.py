@@ -5,15 +5,19 @@ Módulo dedicado a contener la lógica de una clase que sobrecarga a
 
 from asyncio import set_event_loop_policy
 from platform import system
-from typing import Any, Callable, Dict
+from typing import TYPE_CHECKING, Any, Callable, Dict
 
 from discord import Intents, Message
 from discord.ext.commands import Bot
+from discord.utils import utcnow
 
 from ..archivos import get_nombre_archivos
 from ..auxiliares import get_prefijo
 from ..constantes import BOT_ID, COGS_PATH
 from ..logger import BotLogger
+
+if TYPE_CHECKING:
+    from datetime import datetime, timedelta
 
 # Para que no tire error en Windows al cerrar el Bot.
 
@@ -42,10 +46,7 @@ class BotShot(Bot):
         Devuelve los intents específicos para BotShot.
         """
 
-        intents = Intents.default()
-        intents.message_content = True # pylint: disable=assigning-non-slot
-
-        return intents
+        return Intents.all()
 
 
     def __init__(self,
@@ -59,6 +60,7 @@ class BotShot(Bot):
                          application_id=BOT_ID,
                          options=opciones)
 
+        self.despierto_desde: "datetime" = utcnow()
         self.partidas_truco: Dict[str, Any] = {}
 
 
@@ -86,3 +88,12 @@ class BotShot(Bot):
         """
 
         return BotLogger()
+
+
+    @property
+    def uptime(self) -> "timedelta":
+        """
+        Shows Botarius' uptime.
+        """
+
+        return utcnow() - self.despierto_desde

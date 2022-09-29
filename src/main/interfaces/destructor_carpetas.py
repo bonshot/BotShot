@@ -63,8 +63,8 @@ class MenuDestructorCarpetas(MenuCarpetas):
         Cambia la vista por otra, y sigue navegando.
         """
 
-        await interaction.message.edit(content=f"Actualmente en `{self.path}`",
-                                        view=DestructorCarpetas(self.path))
+        await interaction.response.edit_message(content=f"Actualmente en `{self.path}`",
+                                                view=DestructorCarpetas(self.path))
         return True
 
 
@@ -72,6 +72,15 @@ class DestructorCarpetas(SelectorCarpeta):
     """
     Clase para crear carpetas y/o directorios.
     """
+
+    @property
+    def mensaje_refrescar(self) -> str:
+        """
+        El string que se muestra al refrescar el mensaje.
+        """
+
+        return f"Actualmente en `{self.ruta}`"
+
 
     def generar_menu(self) -> MenuDestructorCarpetas:
         """
@@ -94,30 +103,22 @@ class DestructorCarpetas(SelectorCarpeta):
                                       placeholder=placeholder)
 
 
-    async def refrescar_mensaje(self, interaccion: Interaction) -> None:
-        """
-        Refresca el mensaje con la vista nueva.
-        """
-        await interaccion.message.edit(content=f"Actualmente en `{self.ruta}`",
-                                       view=self)
-
-
     @button(label="Borrar Directorio",
             style=ButtonStyle.red,
             custom_id="del_dir",
             row=2,
-            emoji=Emoji.from_str("\N{Heavy Multiplication X}"))
-    async def crear_carpeta(self, interaccion: Interaction, _boton: Button) -> None:
+            emoji=Emoji.from_str("\U0000274C"))
+    async def borrar_carpeta(self, interaccion: Interaction, _boton: Button) -> None:
         """
         Pregunta si se desea borrar la carpeta deseada.
         """
 
         if self.ruta == IMAGES_PATH:
             msg = "\n\n*...estas...*\n*...estás tratando de borrar la carpeta raíz!?*"
-            await interaccion.message.edit(content=msg,
-                                           view=self)
+            await interaccion.response.edit_message(content=msg,
+                                                    view=self)
             return
 
-        await interaccion.message.edit("¿Estás ***seguro*** de que querés borrar " +
-                                       f"`{partir_ruta(self.ruta)[1]}`?",
-                                       view=ConfirmacionDestruir(ruta=self.ruta))
+        await interaccion.response.edit_message(content="¿Estás ***seguro*** de que querés borrar " +
+                                                        f"`{partir_ruta(self.ruta)[1]}`?",
+                                                view=ConfirmacionDestruir(ruta=self.ruta))
