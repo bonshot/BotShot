@@ -11,14 +11,14 @@ from ..archivos import cargar_json, guardar_json
 from ..checks import es_canal_escuchado, mensaje_tiene_imagen
 from ..constantes import DEFAULT_PREFIX, PROPERTIES_FILE
 from ..interfaces import ConfirmacionGuardar
-from .categoria_comandos import CategoriaComandos
+from .cog_abc import _CogABC
 
 if TYPE_CHECKING:
 
     from ..botshot import BotShot
 
 
-class CogEventos(CategoriaComandos):
+class CogEventos(_CogABC):
     """
     Cog para confirmar si guardar imágenes.
     """
@@ -60,7 +60,7 @@ class CogEventos(CategoriaComandos):
                           f'mediante {"un mensaje sin contenido" if not mensaje.content else f"el mensaje `{mensaje.content}`"}') #pylint: disable=line-too-long
         await mensaje.channel.send(content='¿Querés guardarlo pibe?',
                                    view=ConfirmacionGuardar(),
-                                   delete_after=120,
+                                   delete_after=30,
                                    reference=mensaje.to_reference())
 
 

@@ -12,12 +12,12 @@ BOT_TOKEN = getenv('TOKEN')
 El token usado para logear el bot.
 """
 
-BOT_VERSION = "0.0.9"
+BOT_VERSION = "0.1.0"
 """
 La versión de BotShot.
 """
 
-BOT_ID = 123456789
+BOT_ID = 839702615977492510
 """
 El ID único de BotShot.
 """

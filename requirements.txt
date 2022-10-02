@@ -1,3 +1,2 @@
-python-dotenv
-git+https://github.com/Rapptz/discord.py
-Pillow
+python-dotenv==0.21.0
+discord.py==2.0.1

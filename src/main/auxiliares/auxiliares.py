@@ -2,9 +2,10 @@
 Módulo para contener funciones auxiliares.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable
 
-from discord import Message
+from discord import Interaction, Message
+from discord.app_commands import Choice
 from discord.ext.commands import Context
 
 from ..archivos import cargar_json
@@ -24,13 +25,13 @@ def get_prefijo(_bot: "BotShot", mensaje: Message) -> str:
     return cargar_json(PROPERTIES_FILE).get("prefijos").get(str(mensaje.guild.id), DEFAULT_PREFIX)
 
 
-def conseguir_id_canal(ctx: Context) -> int:
-    """
-    Si el mensaje tiene menciones a un canal, devuelve el id de la primera
-    de esas menciones, caso contario devuelve el canal sobre el que está parado.
-    """
-    menciones_canales = ctx.message.channel_mentions
+async def autocompletado_canales(interaccion: Interaction,
+                                 current: str) -> list[Choice[str]]:
+        """
+        Devuelve todos los canales del guild que coinciden con la busqueda actual.
+        """
 
-    if menciones_canales:
-        return menciones_canales[0].id
-    return ctx.channel.id
+        canales = interaccion.guild.channels
+
+        return [Choice(name=canal.name, value=str(canal.id)) for canal in canales
+                if current.lower() in canal.name.lower()]

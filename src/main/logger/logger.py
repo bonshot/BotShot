@@ -29,7 +29,7 @@ class BotLogger:
                  *,
                  nombre_log: str='botshot',
                  nivel_log: int=INFO,
-                 formato='[ %(asctime)s ] [ %(levelname)s ] %(message)s',
+                 formato='%(asctime)s - %(levelname)s - %(message)s',
                  formato_fecha='%d-%m-%Y %H:%M:%S') -> None:
         """
         Inicializa una instancia de 'BotLogger'.

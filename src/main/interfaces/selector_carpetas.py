@@ -68,8 +68,8 @@ class MenuCarpetas(Select):
         """
 
         if carpetas:
-            await interaction.message.edit(content=f'Guardando en `{self.path}`',
-                                           view=SelectorCarpeta(self.path))
+            await interaction.response.edit_message(content=f'Guardando en `{self.path}`',
+                                                    view=SelectorCarpeta(self.path))
             return True
         return False
 
@@ -85,10 +85,9 @@ class MenuCarpetas(Select):
             if mensaje.attachments:
                 imagen = mensaje.attachments[0]
                 await imagen.save(unir_ruta(self.path, imagen.filename))
-                await interaction.message.edit(content=f'Guardado en `{self.path}`, ' +
-                                                        'Goshujin-Sama <:ouiea:862131679073927229>',
-                                               view=None,
-                                               delete_after=10)
+                await interaction.response.edit_message(content=f'Guardado en `{self.path}`, ' +
+                                                                'Goshujin-Sama <:ouiea:862131679073927229>',
+                                                        view=None)
 
 
 class SelectorCarpeta(View):
@@ -154,6 +153,15 @@ class SelectorCarpeta(View):
                 (1 if self.cantidad_rutas % self.cantidad_elementos else 0))
 
 
+    @property
+    def mensaje_refrescar(self) -> str:
+        """
+        El string que se muestra al refrescar el mensaje.
+        """
+
+        return f'Guardando en `{self.ruta}`'
+
+
     def generar_menu(self) -> MenuCarpetas:
         """
         Genera un nuevo menú de carpetas.
@@ -174,11 +182,23 @@ class SelectorCarpeta(View):
         self.actualizar_botones()
 
 
-    async def refrescar_mensaje(self, interaccion: Interaction) -> None:
+    async def refrescar_mensaje(self,
+                                interaccion: Interaction,
+                                *,
+                                es_final: bool=True) -> None:
         """
         Refresca el mensaje con la vista nueva.
+
+        'es_final' refiere a si la modificaciñon al mensaje es final,
+        esto es si la actualización del mensaje debería responder a
+        la interacción o no.
         """
-        await interaccion.message.edit(content=f'Guardando en `{self.ruta}`',
+        if es_final:
+            await interaccion.response.edit_message(content=self.mensaje_refrescar,
+                                                    view=self)
+            return
+
+        await interaccion.message.edit(content=self.mensaje_refrescar,
                                        view=self)
 
 
@@ -207,7 +227,7 @@ class SelectorCarpeta(View):
             style=ButtonStyle.gray,
             custom_id="go_back",
             row=2,
-            emoji=Emoji.from_str("\N{Leftwards Arrow with Hook}"))
+            emoji=Emoji.from_str("\U000021A9"))
     async def volver_anterior_carpeta(self, interaccion: Interaction, _boton: Button) -> None:
         """
         Vuelve a la carpeta anterior, si es posible.
@@ -221,7 +241,7 @@ class SelectorCarpeta(View):
     @button(style=ButtonStyle.grey,
             custom_id="pg_back",
             row=2,
-            emoji=Emoji.from_str("\N{Leftwards Black Arrow}"))
+            emoji=Emoji.from_str("\U00002B05"))
     async def pagina_anterior(self, interaccion: Interaction, _boton: Button) -> None:
         """
         Va a la página anterior.
@@ -234,7 +254,7 @@ class SelectorCarpeta(View):
     @button(style=ButtonStyle.grey,
             custom_id="pg_next",
             row=2,
-            emoji=Emoji.from_str("\N{Black Rightwards Arrow}"))
+            emoji=Emoji.from_str("\U000027A1"))
     async def pagina_siguiente(self, interaccion: Interaction, _boton: Button) -> None:
         """
         Va a la página siguiente.

@@ -4,38 +4,50 @@ Cog para manejar imágenes.
 
 from typing import TYPE_CHECKING
 
-from discord import File
-from discord.ext.commands import Context, command
+from discord import File, Interaction
+from discord.app_commands import command as appcommand
+from discord.app_commands import describe
 
 from ..archivos import archivo_random, carpeta_random, tiene_subcarpetas
 from ..constantes import IMAGES_PATH
-from .categoria_comandos import CategoriaComandos
+from .cog_abc import _CogABC
 
 if TYPE_CHECKING:
 
     from ..botshot import BotShot
 
 
-class CogImagenes(CategoriaComandos):
+class CogImagenes(_CogABC):
     """
     Cog para comandos de manejar imágenes.
     """
 
-    @command(name='randart',
-             help='Manda una foto random')
-    async def gimmerandart(self, ctx: Context) -> None:
+    @appcommand(name='randart',
+                description='Muestra una imagen aleatoria.')
+    @describe(cantidad="La cantidad de imágenes a mandar. Máximo 15 (quince).")
+    async def gimmerandart(self, interaccion: Interaction, cantidad: int=1) -> None:
         """|
         Mandar una foto random.
         """
         path_archivo = IMAGES_PATH
+        limite = 15
+        cantidad = (cantidad if cantidad > 0 else 1)
 
-        while tiene_subcarpetas(path_archivo):
-            path_archivo = carpeta_random(path_archivo)
-        foto_random = File(archivo_random(path_archivo))
+        if cantidad > limite:
+            await interaccion.response.send_message(content=f'¡Pará {interaccion.user.mention}, marrano! ' +
+                                                             'No puedo con tantas imágenes, el límite ' +
+                                                             f'es `{limite}`.')
+        else:
+            await interaccion.response.send_message(content='Disfruta de tu porno, puerco de mierda ' +
+                                                    f'{interaccion.user.mention}',)
 
-        await ctx.channel.send(content='Disfruta de tu porno, puerco de mierda ' +
-                                       f'{ctx.author.mention}',
-                               file=foto_random)
+        for i in range(cantidad):
+            while tiene_subcarpetas(path_archivo):
+                path_archivo = carpeta_random(path_archivo)
+
+            arch = File(archivo_random(path_archivo))
+            await interaccion.channel.send(content=f'**||{arch.filename}||**',
+                                        file=arch)
 
 
 async def setup(bot: "BotShot"):
