@@ -86,6 +86,17 @@ class CogAdmin(_CogABC):
                                                     ephemeral=True)
 
 
+    async def _desconectar_clientes_de_voz(self) -> None:
+        """
+        Desconeta BotShot de todas las conexiones de voz que tenga.
+        """
+
+        self.bot.log.info("Cerrando conexiones de voz...")
+
+        for client in self.bot.voice_clients:
+            await client.disconnect()
+
+
     @appcommand(name="reboot",
                 description="[ADMIN] Reinicia el bot.")
     async def reboot(self, interaccion: Interaction) -> None:
@@ -108,6 +119,7 @@ class CogAdmin(_CogABC):
                                                 ephemeral=True)
         self.bot.log.info(mensaje)
 
+        await self._desconectar_clientes_de_voz()
         execl(sys_executable, sys_executable, "-m", "src.main.main")
 
 
@@ -121,6 +133,7 @@ class CogAdmin(_CogABC):
         await interaccion.response.send_message(content=adios,
                                                 ephemeral=True)
         self.bot.log.info(adios)
+        await self._desconectar_clientes_de_voz()
         await self.bot.close()
 
 

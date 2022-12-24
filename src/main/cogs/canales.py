@@ -11,7 +11,7 @@ from discord.app_commands import describe
 from discord.app_commands.checks import has_role
 
 from ..archivos import cargar_json, guardar_json
-from ..auxiliares import autocompletado_canales
+from ..auxiliares import autocompletado_todos_canales
 from ..constantes import DEV_ROLE_ID, PROPERTIES_FILE
 from .cog_abc import _CogABC
 
@@ -50,7 +50,7 @@ class CogCanales(_CogABC):
                 description='Agregar canal al que el bot escucha.')
     @describe(canal='El canal a agregar de este guild a agregar.')
     @has_role(DEV_ROLE_ID)
-    @autocomplete(canal=autocompletado_canales)
+    @autocomplete(canal=autocompletado_todos_canales)
     async def agregar_channel(self, interaccion: Interaction, canal: Optional[str]=None) -> None:
         """
         Agrega un nuevo canal para que escuche el bot.
