@@ -34,4 +34,4 @@ async def autocompletado_canales(interaccion: Interaction,
         canales = interaccion.guild.channels
 
         return [Choice(name=canal.name, value=str(canal.id)) for canal in canales
-                if current.lower() in canal.name.lower()]
+                if current.lower() in canal.name.lower()][:20]

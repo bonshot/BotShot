@@ -50,7 +50,8 @@ class CogEventos(_CogABC):
         """
         Escucha un mensaje enviado si este tiene una imagen.
         """
-        if any((mensaje.author == self.bot.user,
+        if any((
+            mensaje.author == self.bot.user,
             not es_canal_escuchado(mensaje),
             not mensaje_tiene_imagen(mensaje))):
             return
