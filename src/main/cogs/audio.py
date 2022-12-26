@@ -26,7 +26,7 @@ class CogAudio(_CogABC):
     """
 
     @appcommand(name="conectar",
-                description="Conecta a un canal.")
+                description="Conecta a un canal de voz.")
     @describe(canal="El canal al que conectarse.")
     @has_role(DEV_ROLE_ID)
     @autocomplete(canal=autocompletado_canales_voz)

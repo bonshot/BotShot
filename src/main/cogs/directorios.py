@@ -10,7 +10,8 @@ from discord.app_commands import describe
 from discord.ext.commands import Context
 
 from ..archivos import unir_ruta
-from ..constantes import DEV_ROLE_ID, IMAGES_PATH
+from ..constantes import DEV_ROLE_ID
+from ..db.atajos import get_imagenes_path
 from ..interfaces import CreadorCarpetas, DestructorCarpetas
 from .cog_abc import _CogABC
 
@@ -43,7 +44,7 @@ class CogDirs(_CogABC):
         Crea una nueva carpeta en un directorio a elección.
         """
         nombre = '_'.join(nombre.split())
-        await interaction.channel.send(f"Creando como `{unir_ruta(IMAGES_PATH, nombre)}`",
+        await interaction.channel.send(f"Creando como `{unir_ruta(get_imagenes_path(), nombre)}`",
                                        view=CreadorCarpetas(nombre_carpeta=nombre),
                                        delete_after=30.0)
         await interaction.response.send_message("¡Creando carpeta!",
@@ -56,7 +57,7 @@ class CogDirs(_CogABC):
         """
         Explora las carpetas, con posibilidad de borrar un directorio.
         """
-        await interaction.channel.send(f'Actualmente en `{IMAGES_PATH}`',
+        await interaction.channel.send(f'Actualmente en `{get_imagenes_path()}`',
                                        view=DestructorCarpetas(),
                                        delete_after=30.0)
         await interaction.response.send_message("¡Destruyendo carpeta!",

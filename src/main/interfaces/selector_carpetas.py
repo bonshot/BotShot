@@ -11,7 +11,7 @@ from discord.enums import ButtonStyle
 from discord.ui import Button, Select, View, button
 
 from ..archivos import lista_carpetas, partir_ruta, unir_ruta
-from ..constantes import IMAGES_PATH
+from ..db.atajos import get_imagenes_path
 
 
 class MenuCarpetas(Select):
@@ -96,7 +96,7 @@ class SelectorCarpeta(View):
     """
 
     def __init__(self,
-                 ruta: str=IMAGES_PATH,
+                 ruta: str=get_imagenes_path(),
                  pagina: int=0,
                  timeout: Optional[float]=120.0) -> None:
         """
@@ -207,7 +207,7 @@ class SelectorCarpeta(View):
         Oculta el botón dependiendo de la página actual.
         """
 
-        boton.disabled = any(((boton.custom_id == "go_back" and self.ruta == IMAGES_PATH),
+        boton.disabled = any(((boton.custom_id == "go_back" and self.ruta == get_imagenes_path()),
                             (boton.custom_id == "pg_back" and self.pagina <= 0),
                             (boton.custom_id == "pg_next" and self.pagina >= (self.max_paginas - 1))
                              ))

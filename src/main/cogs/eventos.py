@@ -7,9 +7,8 @@ from typing import TYPE_CHECKING
 from discord import Guild, Message
 from discord.ext.commands import Cog, Context
 
-from ..archivos import cargar_json, guardar_json
 from ..checks import es_canal_escuchado, mensaje_tiene_imagen
-from ..constantes import DEFAULT_PREFIX, PROPERTIES_FILE
+from ..db.atajos import actualizar_guild
 from ..interfaces import ConfirmacionGuardar
 from .cog_abc import _CogABC
 
@@ -28,6 +27,9 @@ class CogEventos(_CogABC):
         """
         El bot se conectó y está listo para usarse.
         """
+        self.bot.log.info("Actualizando base de datos...")
+        self.bot.actualizar_db()
+
         self.bot.log.info(f'¡{self.bot.user} conectado y listo para utilizarse!')
 
 
@@ -38,11 +40,7 @@ class CogEventos(_CogABC):
         """
 
         self.bot.log.info(f'El bot se conectó a "{guild.name}"')
-
-        dic_propiedades = cargar_json(PROPERTIES_FILE)
-        dic_propiedades['prefijos'][str(guild.id)] = DEFAULT_PREFIX
-
-        guardar_json(dic_propiedades, PROPERTIES_FILE)
+        actualizar_guild(guild.id, guild.name)
 
 
     @Cog.listener()

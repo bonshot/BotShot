@@ -11,8 +11,8 @@ from discord.app_commands import command as appcommand
 from discord.app_commands import describe
 from discord.ext.commands import Context
 
-from ..archivos import cargar_json, guardar_json
-from ..constantes import DEV_ROLE_ID, LOG_PATH, PROPERTIES_FILE
+from ..constantes import DEV_ROLE_ID
+from ..db.atajos import actualizar_prefijo, get_log_path, get_prefijo_guild
 from .cog_abc import _CogABC
 
 if TYPE_CHECKING:
@@ -53,8 +53,7 @@ class CogAdmin(_CogABC):
         solamente del servidor de donde este comando fue invocado.
         """
         guild_id = interaccion.guild.id
-        dic_propiedades = cargar_json(PROPERTIES_FILE)
-        prefijo_viejo = dic_propiedades['prefijos'][str(guild_id)]
+        prefijo_viejo = get_prefijo_guild(guild_id=guild_id)
 
         if prefijo_viejo == nuevo_prefijo:
             await interaccion.response.send_message(f'Cariño, `{nuevo_prefijo}` *ya es* el prefijo ' +
@@ -62,9 +61,7 @@ class CogAdmin(_CogABC):
                                                     ephemeral=True)
             return
 
-        
-        dic_propiedades['prefijos'][str(guild_id)] = nuevo_prefijo
-        guardar_json(dic_propiedades, PROPERTIES_FILE)
+        actualizar_prefijo(nuevo_prefijo, guild_id)
 
         await interaccion.response.send_message('**[AVISO]** El prefijo de los comandos fue cambiado de ' +
                                                 f'`{prefijo_viejo}` a `{nuevo_prefijo}` exitosamente.',
@@ -80,9 +77,11 @@ class CogAdmin(_CogABC):
         Vacía el archivo de registros.
         """
 
-        with open(LOG_PATH, mode='w', encoding="utf-8"):
+        log = get_log_path()
+
+        with open(log, mode='w', encoding="utf-8"):
             await interaccion.response.send_message("**[INFO]** Vaciando el log en " +
-                                                    f"`{LOG_PATH}`...",
+                                                    f"`{log}`...",
                                                     ephemeral=True)
 
 
@@ -166,6 +165,7 @@ class CogAdmin(_CogABC):
         await interaccion.response.send_message(f"***{self.bot.user}** estuvo activo por " +
                                                 f"{', '.join(tiempo)}.*",
                                                 ephemeral=True)
+
 
 
 async def setup(bot: "BotShot"):

@@ -5,8 +5,7 @@ condiciones.
 
 from discord import Message
 
-from ..archivos import cargar_json
-from ..constantes import PROPERTIES_FILE
+from ..db.atajos import existe_canal_escuchado
 
 
 def es_canal_escuchado(mensaje: Message) -> bool:
@@ -16,11 +15,8 @@ def es_canal_escuchado(mensaje: Message) -> bool:
     """
     if mensaje.guild is None: # Si es un mensaje enviado por slash commands, por ejemplo
         return False
-    guild_actual = str(mensaje.guild.id)
-    canal_actual = str(mensaje.channel.id)
-    dic_propiedades = cargar_json(PROPERTIES_FILE)
-    return (guild_actual in dic_propiedades['canales_escuchables']
-            and canal_actual in dic_propiedades['canales_escuchables'][guild_actual])
+
+    return existe_canal_escuchado(id_canal=mensaje.channel.id)
 
 
 def mensaje_tiene_imagen(mensaje: Message) -> bool:

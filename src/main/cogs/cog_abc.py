@@ -18,7 +18,7 @@ class _CogABC(Cog):
 
     def __init__(self, bot: "BotShot") -> None:
         """
-        Inicializa una instancia 'CategoriaComandos'.
+        Inicializa una instancia '_CogABC', o una hija.
         """
         self.bot: "BotShot" = bot
 

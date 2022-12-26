@@ -9,7 +9,7 @@ from discord import PartialEmoji as Emoji
 from discord.enums import ButtonStyle
 from discord.ui import Button, View, button
 
-from ..constantes import IMAGES_PATH
+from ..db.atajos import get_imagenes_path
 from .selector_carpetas import SelectorCarpeta
 
 
@@ -33,7 +33,7 @@ class ConfirmacionGuardar(View):
         """
         Confirma que se quiere guardar algo.
         """
-        await interaction.response.edit_message(content=f'Guardando en `{IMAGES_PATH}`',
+        await interaction.response.edit_message(content=f'Guardando en `{get_imagenes_path()}`',
                                                 view=SelectorCarpeta())
 
 

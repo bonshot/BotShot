@@ -9,7 +9,7 @@ from discord.app_commands import command as appcommand
 from discord.app_commands import describe
 
 from ..archivos import archivo_random, carpeta_random, tiene_subcarpetas
-from ..constantes import IMAGES_PATH
+from ..db.atajos import get_imagenes_path
 from .cog_abc import _CogABC
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ class CogImagenes(_CogABC):
         """|
         Mandar una foto random.
         """
-        path_archivo = IMAGES_PATH
+        path_archivo = get_imagenes_path()
         limite = 15
         cantidad = (cantidad if cantidad > 0 else 1)
 
