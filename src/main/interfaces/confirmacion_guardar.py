@@ -28,7 +28,7 @@ class ConfirmacionGuardar(View):
     @button(label="Obvio",
             style=ButtonStyle.green,
             custom_id="confirm",
-            emoji=Emoji.from_str("<:rule34:891890132737736734>"))
+            emoji=Emoji.from_str("\U00002705"))
     async def confirmar_guardar(self, interaction: Interaction, _boton: Button) -> None:
         """
         Confirma que se quiere guardar algo.
@@ -40,7 +40,7 @@ class ConfirmacionGuardar(View):
     @button(label="Nah",
             style=ButtonStyle.red,
             custom_id="cancel",
-            emoji=Emoji.from_str("<:pepeint:846946459756789791>"))
+            emoji=Emoji.from_str("\U0000274C"))
     async def cancelar_guardar(self, interaction: Interaction, _boton: Button) -> None:
         """
         Cancela la guardación.

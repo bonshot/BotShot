@@ -86,7 +86,7 @@ class MenuCarpetas(Select):
                 imagen = mensaje.attachments[0]
                 await imagen.save(unir_ruta(self.path, imagen.filename))
                 await interaction.response.edit_message(content=f'Guardado en `{self.path}`, ' +
-                                                                'Goshujin-Sama <:ouiea:862131679073927229>',
+                                                                'Goshujin-Sama \U0001F44D',
                                                         view=None)
 
 
