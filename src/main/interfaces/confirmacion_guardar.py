@@ -9,7 +9,7 @@ from discord import PartialEmoji as Emoji
 from discord.enums import ButtonStyle
 from discord.ui import Button, View, button
 
-from ..constantes import IMAGES_PATH
+from ..db.atajos import get_imagenes_path
 from .selector_carpetas import SelectorCarpeta
 
 
@@ -28,19 +28,19 @@ class ConfirmacionGuardar(View):
     @button(label="Obvio",
             style=ButtonStyle.green,
             custom_id="confirm",
-            emoji=Emoji.from_str("<:rule34:891890132737736734>"))
+            emoji=Emoji.from_str("\U00002705"))
     async def confirmar_guardar(self, interaction: Interaction, _boton: Button) -> None:
         """
         Confirma que se quiere guardar algo.
         """
-        await interaction.response.edit_message(content=f'Guardando en `{IMAGES_PATH}`',
+        await interaction.response.edit_message(content=f'Guardando en `{get_imagenes_path()}`',
                                                 view=SelectorCarpeta())
 
 
     @button(label="Nah",
             style=ButtonStyle.red,
             custom_id="cancel",
-            emoji=Emoji.from_str("<:pepeint:846946459756789791>"))
+            emoji=Emoji.from_str("\U0000274C"))
     async def cancelar_guardar(self, interaction: Interaction, _boton: Button) -> None:
         """
         Cancela la guardación.

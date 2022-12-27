@@ -5,15 +5,15 @@ Módulo dedicado a contener la lógica de una clase que sobrecarga a
 
 from asyncio import set_event_loop_policy
 from platform import system
-from typing import TYPE_CHECKING, Any, Callable, Dict
+from typing import TYPE_CHECKING, Callable
 
 from discord import Intents, Message
 from discord.ext.commands import Bot
 from discord.utils import utcnow
 
-from ..archivos import get_nombre_archivos
+from ..archivos import lista_archivos
 from ..auxiliares import get_prefijo
-from ..constantes import BOT_ID, COGS_PATH
+from ..db.atajos import get_botshot_id, get_cogs_path, actualizar_guild
 from ..logger import BotLogger
 
 if TYPE_CHECKING:
@@ -57,11 +57,10 @@ class BotShot(Bot):
         """
         super().__init__(cmd_prefix,
                          intents=BotShot.intents_botshot(),
-                         application_id=BOT_ID,
+                         application_id=get_botshot_id(),
                          options=opciones)
 
         self.despierto_desde: "datetime" = utcnow()
-        self.partidas_truco: Dict[str, Any] = {}
 
 
     async def setup_hook(self) -> None:
@@ -71,14 +70,26 @@ class BotShot(Bot):
 
         ext = "py"
 
-        for cog_name in get_nombre_archivos(COGS_PATH, ext=ext):
+        for cog_name in lista_archivos(get_cogs_path(), ext=ext):
             if cog_name == "__init__.py":
                 continue
 
             await self.load_extension(f".{cog_name.removesuffix(f'.{ext}')}",
                                       package="src.main.cogs")
 
+        self.log.info("Sincronizando arbol de comandos...")
         await self.tree.sync()
+
+
+    def actualizar_db(self) -> None:
+        """
+        Hace todos los procedimientos necesarios para actualizar
+        la base de datos de ser necesario.
+        """
+
+        self.log.info("[DB] Actualizando guilds...")
+        for guild in self.guilds:
+            actualizar_guild(guild.id, guild.name)
 
 
     @property

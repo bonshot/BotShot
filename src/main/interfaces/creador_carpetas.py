@@ -9,7 +9,7 @@ from discord import PartialEmoji as Emoji
 from discord.ui import Button, button
 
 from ..archivos import crear_dir, lista_carpetas, partir_ruta, unir_ruta
-from ..constantes import IMAGES_PATH
+from ..db.atajos import get_imagenes_path
 from .selector_carpetas import MenuCarpetas, SelectorCarpeta
 
 
@@ -78,7 +78,7 @@ class CreadorCarpetas(SelectorCarpeta):
 
     def __init__(self,
                  nombre_carpeta: str,
-                 ruta: str=IMAGES_PATH,
+                 ruta: str=get_imagenes_path(),
                  pagina: int=0,
                  timeout: Optional[float]=120.0) -> None:
         """

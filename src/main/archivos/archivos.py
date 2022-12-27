@@ -3,31 +3,16 @@ Módulo hecho para trabajar con archivos, como leer y cargar
 información persistente.
 """
 
-from json import load, dump
+from datetime import datetime
+from os import listdir, mkdir, path, remove, rmdir
 from random import choice
-from os import listdir, path, mkdir, rmdir
-from typing import List, Optional
+from typing import List, Optional, TypeAlias
+from zipfile import ZIP_DEFLATED, ZipFile
 
-DiccionarioPares = dict[str, str]
+from ..db import DEFAULT_DB
+from ..db.atajos import get_backup_path, get_limite_backup_db
 
-
-def cargar_json(nombre_archivo: str) -> DiccionarioPares:
-    """
-    Lee y carga un archivo JSON.
-    """
-    dic_pares_valores = dict()
-
-    with open(nombre_archivo, mode='r', encoding='utf-8') as archivo:
-        dic_pares_valores = load(archivo)
-    return dic_pares_valores
-
-
-def guardar_json(dic_pares_valores: DiccionarioPares, nombre_archivo: str) -> None:
-    """
-    Recibe un diccionario y guarda la informacion del mismo en un archivo JSON.
-    """
-    with open(nombre_archivo, mode='w', encoding='utf-8') as archivo:
-        dump(dic_pares_valores, archivo, indent=4)
+DiccionarioPares: TypeAlias = dict[str, str]
 
 
 def unir_ruta(ruta: str, sub_ruta: str) -> str:
@@ -71,15 +56,7 @@ def lista_carpetas(ruta: str) -> list[str]:
     return [dir for dir in listdir(ruta) if path.isdir(unir_ruta(ruta, dir))]
 
 
-def lista_archivos(ruta: str) -> list[str]:
-    """
-    Devuelve una lista de todos los nombres de archivos dentro
-    de una ruta indicada.
-    """
-    return [file for file in listdir(ruta) if not path.isdir(unir_ruta(ruta, file))]
-
-
-def get_nombre_archivos(ruta: str, ext: Optional[str]=None) -> List[str]:
+def lista_archivos(ruta: str, ext: Optional[str]=None) -> List[str]:
     """
     Busca en la ruta especificada si hay archivos, y devuelve una lista
     con los nombres de los que encuentre.
@@ -89,7 +66,8 @@ def get_nombre_archivos(ruta: str, ext: Optional[str]=None) -> List[str]:
     tratado como `.py`.
     """
 
-    return [file for file in listdir(ruta) if (file.endswith(f".{ext}") if ext else True)]
+    return [file for file in listdir(ruta) if ((not path.isdir(unir_ruta(ruta, file)))
+                                               and (file.endswith(f".{ext}") if ext else True))]
 
 
 def carpeta_random(ruta: str) -> str:
@@ -117,3 +95,30 @@ def tiene_subcarpetas(path_dir: str) -> bool:
             return True
 
     return False
+
+
+def hacer_backup_db() -> bool:
+    """
+    Realiza la compresión de una copia de la DB,
+    y la almacena.
+
+    Devuelve 'True' si todavía no se alcanzó el límite,
+    sino elimina el más viejo y devuelve 'False'.
+    """
+
+    db_backup_path = f"{get_backup_path()}/db"
+    lista_dir = lista_archivos(db_backup_path)
+    res = True
+
+    if len(lista_dir) >= get_limite_backup_db():
+        remove(unir_ruta(db_backup_path, min(lista_dir)))
+        res = False
+
+    nombre = f"db_{datetime.now().strftime(r'%Y-%m-%d_%H-%M-%S')}.zip"
+
+    with ZipFile(file=unir_ruta(db_backup_path, nombre),
+                 mode='w',
+                 compression=ZIP_DEFLATED) as zf:
+        zf.write(filename=DEFAULT_DB, arcname=partir_ruta(DEFAULT_DB)[1])
+
+    return res

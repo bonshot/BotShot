@@ -5,19 +5,100 @@ Cog que agrupa comandos para los canales.
 from typing import TYPE_CHECKING, Optional
 
 from discord import Interaction
-from discord.app_commands import Choice, autocomplete, choices
+from discord.app_commands import autocomplete
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
-from discord.app_commands.checks import has_role
 
-from ..archivos import cargar_json, guardar_json
-from ..auxiliares import autocompletado_todos_canales
-from ..constantes import DEV_ROLE_ID, PROPERTIES_FILE
-from .cog_abc import _CogABC
+from ..auxiliares import (autocompletado_canales_escuchados,
+                          autocompletado_todos_canales)
+from ..checks import es_usuario_autorizado
+from ..db.atajos import (actualizar_canal_escuchado, borrar_canal_escuchado,
+                         get_canales_escuchados)
+from .cog_abc import GroupsList, _CogABC, _GrupoABC
 
 if TYPE_CHECKING:
 
     from ..botshot import BotShot
+
+
+class GrupoCanal(_GrupoABC):
+    """
+    Grupo para comandos que manejan canales.
+    """
+
+    def __init__(self, bot: "BotShot") -> None:
+        """
+        Inicializa una instancia de 'GrupoCanal'.
+        """
+
+        super().__init__(bot,
+                         name="ch",
+                         description="Comandos para manejar canales.")
+
+
+    @appcommand(name='lista',
+                description='Mostrar lista de canales que el bot escucha')
+    @es_usuario_autorizado()
+    async def mostrar_channels(self, interaccion: Interaction) -> None:
+        """
+        Muestra en discord una lista de los canales que el bot está escuchando.
+        """
+        dic_canales_escuchados = get_canales_escuchados()
+        canales = []
+
+        for id_guild, lista_id_canales in dic_canales_escuchados.items():
+            canales_guild = []
+            for id_canal, _ in lista_id_canales:
+                canales_guild.append(f'**{interaccion.guild.get_channel(id_canal).mention}**:\t`{id_canal}`')
+            canales.append(f"**{self.bot.get_guild(id_guild).name}:**\n>>> " + '\n'.join(canales_guild))
+
+        mensaje_canales = '\n'.join(canales)
+        await interaccion.response.send_message((f'*Lista de Canales Escuchando Actualmente:*\n\n{mensaje_canales}'
+                                                 if mensaje_canales else "*Actualmente no hay ningún canal agregado.*"))
+
+
+    @appcommand(name='agregar',
+                description='Agregar canal al que el bot escucha.')
+    @describe(canal='El canal a agregar de este guild a agregar.')
+    @autocomplete(canal=autocompletado_todos_canales)
+    @es_usuario_autorizado()
+    async def agregar_channel(self, interaccion: Interaction, canal: Optional[str]=None) -> None:
+        """
+        Agrega un nuevo canal para que escuche el bot.
+        """
+        if canal is None:
+            canal = interaccion.channel.id
+        else:
+            canal = int(canal)
+        guild_id = interaccion.guild.id
+        nombre_canal = interaccion.guild.get_channel(canal).name
+
+        if actualizar_canal_escuchado(id_canal=canal,
+                                      nombre_canal=nombre_canal,
+                                      id_guild=guild_id):
+            await interaccion.response.send_message(f'El canal `{nombre_canal}` ' +
+                                                     'ya está presente, pero actualicé el nombre igualmente.',
+                                                    ephemeral=True)
+        else:
+            await interaccion.response.send_message(f'Canal `{nombre_canal}` ' +
+                                                     'guardado exitosamente en los escuchados!',
+                                                    ephemeral=True)
+
+
+    @appcommand(name='eliminar',
+                description='Remover un canal al que el bot escucha')
+    @describe(canal="El canal a borrar.")
+    @autocomplete(canal=autocompletado_canales_escuchados)
+    @es_usuario_autorizado()
+    async def eliminar_channel(self, interaccion: Interaction, canal: str) -> None:
+        """
+        Elimina un canal existente en escucha del bot.
+        """
+
+        nombre_canal = interaccion.guild.get_channel(int(canal)).name
+        borrar_canal_escuchado(int(canal))
+        await interaccion.response.send_message(f'El canal `{nombre_canal}` fue eliminado exitosamente, pa',
+                                                ephemeral=True)
 
 
 class CogCanales(_CogABC):
@@ -26,86 +107,13 @@ class CogCanales(_CogABC):
     información sobre los canales.
     """
 
-    @appcommand(name='listach',
-                description='Mostrar lista de canales que el bot escucha')
-    @has_role(DEV_ROLE_ID)
-    async def mostrar_channels(self, interaccion: Interaction) -> None:
+    @classmethod
+    def grupos(cls) -> GroupsList:
         """
-        Muestra en discord una lista de los canales que el bot está escuchando.
+        Devuelve la lista de grupos asociados a este Cog.
         """
-        dic_id_guilds = cargar_json(PROPERTIES_FILE).get('canales_escuchables')
-        canales = []
-        for id_guild, lista_id_canales in dic_id_guilds.items():
-            canales_guild = []
-            for id_canal in lista_id_canales:
-                canales_guild.append(f'**{interaccion.guild.get_channel(int(id_canal)).mention}**:\t`{id_canal}`')
-            canales.append(f"**{self.bot.get_guild(int(id_guild)).name}:**\n>>> " + '\n'.join(canales_guild))
 
-        mensaje_canales = '\n'.join(canales)
-        await interaccion.response.send_message((f'*Lista de Canales Escuchando Actualmente:*\n\n{mensaje_canales}'
-                                                 if mensaje_canales else "*Actualmente no hay ningún canal agregado.*"))
-
-
-    @appcommand(name='agregarch',
-                description='Agregar canal al que el bot escucha.')
-    @describe(canal='El canal a agregar de este guild a agregar.')
-    @has_role(DEV_ROLE_ID)
-    @autocomplete(canal=autocompletado_todos_canales)
-    async def agregar_channel(self, interaccion: Interaction, canal: Optional[str]=None) -> None:
-        """
-        Agrega un nuevo canal para que escuche el bot.
-        """
-        if canal is None:
-            canal = str(interaccion.channel.id)
-        guild_id = interaccion.guild.id
-
-        dic_propiedades = cargar_json(PROPERTIES_FILE)
-        dic_canales = dic_propiedades['canales_escuchables']
-
-        if str(guild_id) not in dic_canales:
-            dic_canales[str(guild_id)] = []
-
-        lista_canales = dic_canales[str(guild_id)]
-        nombre_canal = interaccion.guild.get_channel(int(canal)).name
-
-        if canal not in lista_canales:
-            lista_canales.append(canal)
-            dic_propiedades['canales_escuchables'][str(guild_id)] = lista_canales
-            guardar_json(dic_propiedades, PROPERTIES_FILE)
-            await interaccion.response.send_message(f'Canal `{nombre_canal}` ' +
-                                                     'guardado exitosamente en los escuchados!',
-                                                    ephemeral=True)
-        else:
-            await interaccion.response.send_message(f'El canal `{nombre_canal}` ' +
-                                                     'ya está agregado, no lo voy a poner de nuevo, crack',
-                                                    ephemeral=True)
-
-
-    @appcommand(name='eliminarch',
-                description='Remover un canal al que el bot escucha')
-    @describe(canal="El canal a borrar.")
-    @choices(canal=[
-        Choice(name=canalito, value=canalito)
-        for canalito in [ch for sublista in cargar_json(PROPERTIES_FILE).get("canales_escuchables").values()
-                         for ch in sublista]
-    ])
-    @has_role(DEV_ROLE_ID)
-    async def eliminar_channel(self, interaccion: Interaction, canal: Choice[str]) -> None:
-        """
-        Elimina un canal existente en escucha del bot.
-        """
-        dic_propiedades = cargar_json(PROPERTIES_FILE)
-        dic_guilds = dic_propiedades['canales_escuchables']
-        nombre_canal = interaccion.guild.get_channel(int(canal.value)).name # idealmente canal.name
-
-        for id_guild in dic_guilds:
-            if canal in dic_guilds[id_guild]:
-                dic_guilds[id_guild].remove(canal.value)
-                break
-
-        guardar_json(dic_propiedades, PROPERTIES_FILE)
-        await interaccion.response.send_message(f'El canal `{nombre_canal}` fue eliminado exitosamente, pa',
-                                                ephemeral=True)
+        return [GrupoCanal]
 
 
 async def setup(bot: "BotShot"):

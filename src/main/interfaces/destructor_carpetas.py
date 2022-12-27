@@ -9,7 +9,7 @@ from discord import PartialEmoji as Emoji
 from discord.ui import Button, button
 
 from ..archivos import lista_carpetas, partir_ruta, unir_ruta
-from ..constantes import IMAGES_PATH
+from ..db.atajos import get_imagenes_path
 from .confirmacion_destruir import ConfirmacionDestruir
 from .selector_carpetas import MenuCarpetas, SelectorCarpeta
 
@@ -113,7 +113,9 @@ class DestructorCarpetas(SelectorCarpeta):
         Pregunta si se desea borrar la carpeta deseada.
         """
 
-        if self.ruta == IMAGES_PATH:
+        ruta_raiz = get_imagenes_path()
+
+        if self.ruta == ruta_raiz:
             msg = "\n\n*...estas...*\n*...estás tratando de borrar la carpeta raíz!?*"
             await interaccion.response.edit_message(content=msg,
                                                     view=self)

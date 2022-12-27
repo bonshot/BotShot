@@ -5,12 +5,15 @@ Cog para comandos extras de recomendaciones.
 from typing import TYPE_CHECKING
 
 from discord import Interaction
-from discord.app_commands import command as appcommand, choices, Choice
+from discord.app_commands import autocomplete
+from discord.app_commands import command as appcommand
 from discord.app_commands import describe
-from discord.app_commands.checks import has_role
 
-from ..archivos import cargar_json, guardar_json
-from ..constantes import DEV_ROLE_ID, PROPERTIES_FILE
+from ..auxiliares import autocompletado_recomendaciones_carpetas
+from ..checks import es_usuario_autorizado
+from ..db.atajos import (borrar_recomendacion_carpeta,
+                         get_recomendaciones_carpetas,
+                         insertar_recomendacion_carpeta)
 from .cog_abc import _CogABC
 
 if TYPE_CHECKING:
@@ -31,13 +34,13 @@ class CogRecomendaciones(_CogABC):
         Agrega un nombre de carpeta a los candidatos de nuevas
         carpetas a agregar.
         """
-        dic_propiedades = cargar_json(PROPERTIES_FILE)
-        if nombre_carpeta not in dic_propiedades['carpetas_recomendadas']:
-            dic_propiedades['carpetas_recomendadas'].append(nombre_carpeta)
-            guardar_json(dic_propiedades, PROPERTIES_FILE)
-            mensaje_a_mostrar = f'La carpeta {nombre_carpeta} fue recomendada rey!'
+        if insertar_recomendacion_carpeta(nombre_carpeta=nombre_carpeta,
+                                          nombre_usuario=interaccion.user.name,
+                                          id_usuario=interaccion.user.id):
+            mensaje_a_mostrar = f'La carpeta `{nombre_carpeta}` fue recomendada rey!'
+
         else:
-            mensaje_a_mostrar = "*Recomendado repetido pa*"
+            mensaje_a_mostrar = "*Vos ya recomendaste esa pa.*"
 
         await interaccion.response.send_message(content=mensaje_a_mostrar,
                                                 ephemeral=True)
@@ -45,39 +48,38 @@ class CogRecomendaciones(_CogABC):
 
     @appcommand(name='recomendados',
                 description='[ADMIN] Muestra las carpetas recomendadas')
-    @has_role(DEV_ROLE_ID)
+    @es_usuario_autorizado()
     async def mostrar_recomendados(self, interaccion: Interaction):
         """
         Muestra una lista de los nombres de carpetas que son candidatos
         a agregar.
         """
-        dic_propiedades = cargar_json(PROPERTIES_FILE)
-        recomendadas = dic_propiedades['carpetas_recomendadas']
+
+        recomendadas = get_recomendaciones_carpetas()
+
         if recomendadas:
-            await interaccion.response.send_message(content='>>> \t**Lista de Recomendaciones:**\n\n' +
-                                                    '\n'.join(f'\t-\t`{nombre}`' for nombre in recomendadas))
+            contenido = ('>>> \t**Lista de Recomendaciones:**\n\n' +
+                         '\n'.join(f'\t-\t`{nombre_f}`\t( *{self.bot.get_user(id_u)}* )' for (nombre_f, _, id_u) in recomendadas))
         else:
-            await interaccion.response.send_message(content='*No hay recomendaciones crack.*',
-                                                    ephemeral=True)
+            contenido = '*No hay recomendaciones crack.*'
+
+        await interaccion.response.send_message(content=contenido,
+                                                ephemeral=True)
 
 
     @appcommand(name='desrecomendar',
                 description='[ADMIN] Elimina una de las recomendaciones guardadas.')
     @describe(recomendacion="El nombre de la recomendación guardada.")
-    @choices(recomendacion=[
-        Choice(name=recom, value=recom) for recom in cargar_json(PROPERTIES_FILE).get("carpetas_recomendadas")
-    ])
-    @has_role(DEV_ROLE_ID)
-    async def borrar_recomendados(self, interaccion: Interaction, recomendacion: Choice[str]) -> None:
+    @autocomplete(recomendacion=autocompletado_recomendaciones_carpetas)
+    @es_usuario_autorizado()
+    async def borrar_recomendados(self, interaccion: Interaction, recomendacion: str) -> None:
         """
         Elimina de los recomendados uno que ya estaba.
         """
 
-        dic_propiedades = cargar_json(PROPERTIES_FILE)
-        dic_propiedades["carpetas_recomendadas"].remove(recomendacion.value)
-        guardar_json(dic_propiedades, PROPERTIES_FILE)
+        borrar_recomendacion_carpeta(recomendacion)
 
-        await interaccion.response.send_message(content=f"La recomendación `{recomendacion.value}` esa " +
+        await interaccion.response.send_message(content=f"La recomendación `{recomendacion}` esa " +
                                                         "la saqué correctamente.")
 
 

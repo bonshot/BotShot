@@ -4,20 +4,161 @@ Cog que agrupa comandos administrativos.
 
 from os import execl
 from sys import executable as sys_executable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from discord import Interaction
+from discord.app_commands.errors import CheckFailure
+from discord.app_commands import AppCommandError, autocomplete
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
 from discord.ext.commands import Context
 
-from ..archivos import cargar_json, guardar_json
-from ..constantes import DEV_ROLE_ID, LOG_PATH, PROPERTIES_FILE
-from .cog_abc import _CogABC
+from ..auxiliares import (autocompletado_miembros_guild,
+                          autocompletado_usuarios_autorizados)
+from ..db.atajos import (actualizar_prefijo, borrar_usuario_autorizado,
+                         existe_usuario_autorizado, get_log_path,
+                         get_prefijo_guild, registrar_usuario_autorizado)
+from .cog_abc import GroupsList, _CogABC, _GrupoABC
 
 if TYPE_CHECKING:
 
     from ..botshot import BotShot
+
+
+class GrupoAutorizar(_GrupoABC):
+    """
+    Grupo para comandos de administradores.
+    """
+
+    def __init__(self, bot: "BotShot") -> None:
+        """
+        Inicializa una instancia de 'GrupoAutorizar'.
+        """
+
+        super().__init__(bot,
+                         name="admin",
+                         description="Comandos para autorizar usuarios a usar BotShot.")
+
+
+    async def interaction_check(self, interaccion: Interaction) -> bool:
+        """
+        Verifica si el usuario está autorizado.
+        """
+
+        return ((interaccion.user.id == self.bot.owner_id)
+                 or existe_usuario_autorizado(interaccion.user.id))
+
+
+    async def on_error(self, interaccion: Interaction, error: AppCommandError) -> None:
+        """
+        Avisa el usuario que un comando falló.
+        """
+
+        if isinstance(error, CheckFailure):
+            mensaje = f"No no, {interaccion.user.mention}, vos quién sos para autorizar o desautorizar gente?"
+            await interaccion.response.send_message(content=mensaje,
+                                                    ephemeral=True)
+            return
+
+        raise error from error
+
+
+    @appcommand(name="autorizar",
+                description="[ADMIN] Autoriza a un usuario.")
+    @describe(usuario="El usuario a autorizar.")
+    @autocomplete(usuario=autocompletado_miembros_guild)
+    async def agregar_autorizacion(self,
+                                   interaccion: Interaction,
+                                   usuario: Optional[str]=None) -> None:
+        """
+        Registra un usuario autorizado.
+        """
+
+        if usuario is None:
+            usuario = interaccion.user
+
+        else:
+            usuario = interaccion.guild.get_member(int(usuario))        
+
+        if registrar_usuario_autorizado(usuario.name, int(usuario.discriminator), usuario.id):
+            mensaje = f"Entendido, {usuario.mention}! Ahí te agrego."
+
+        else:
+            mensaje = f"Pero, {usuario.mention}, vos ya estás autorizado."
+
+        await interaccion.response.send_message(content=mensaje,
+                                                ephemeral=True)
+
+    @appcommand(name="desautorizar",
+                description="[ADMIN] Desautoriza a un usuario.")
+    @describe(usuario="El usuario a hechar.")
+    @autocomplete(usuario=autocompletado_usuarios_autorizados)
+    async def sacar_autorizacion(self,
+                                 interaccion: Interaction,
+                                 usuario: str) -> None:
+        """
+        Saca del registro a un usuario previamente autorizado.
+        """
+
+        id_usuario = int(usuario)
+        user = self.bot.get_user(id_usuario)
+        borrar_usuario_autorizado(id_usuario)
+
+        await interaccion.response.send_message(f"{user.display_name} fue despejado de todo poder exitosamente.",
+                                                ephemeral=True)
+
+
+class GrupoLog(_GrupoABC):
+    """
+    Grupos para comandos del logger.
+    """
+
+    def __init__(self, bot: "BotShot") -> None:
+        """
+        Inicializa una instancia de 'GrupoLog'.
+        """
+
+        super().__init__(bot,
+                         name="log",
+                         description="Comandos para manejar el logger.")
+
+
+    async def interaction_check(self, interaccion: Interaction) -> bool:
+        """
+        Verifica si el usuario está autorizado.
+        """
+
+        return ((interaccion.user.id == self.bot.owner_id)
+                 or existe_usuario_autorizado(interaccion.user.id))
+
+
+    async def on_error(self, interaccion: Interaction, error: AppCommandError) -> None:
+        """
+        Avisa el usuario que un comando falló.
+        """
+
+        if isinstance(error, CheckFailure):
+            await interaccion.response.send_message((f"Ay, {interaccion.user.mention}, no tenés permiso " +
+                                                     "para usar este comando."),
+                                                    ephemeral=True)
+            return
+
+        raise error from error
+
+
+    @appcommand(name="flush",
+                description="[ADMIN] Vacía el log.")
+    async def logflush(self, interaccion: Interaction):
+        """
+        Vacía el archivo de registros.
+        """
+
+        log = get_log_path()
+
+        with open(log, mode='w', encoding="utf-8"):
+            await interaccion.response.send_message("**[INFO]** Vaciando el log en " +
+                                                    f"`{log}`...",
+                                                    ephemeral=True)
 
 
 class CogAdmin(_CogABC):
@@ -25,15 +166,22 @@ class CogAdmin(_CogABC):
     Cog para comandos administrativos.
     """
 
+    @classmethod
+    def grupos(cls) -> GroupsList:
+        """
+        Devuelve la lista de grupos asociados a este Cog.
+        """
+
+        return [GrupoAutorizar, GrupoLog]
+
+
     def cog_check(self, ctx: Context) -> bool:
         """
         Verifica si el que invoca el comando es un admin o un dev.
         """
 
-        try:
-            return ctx.author.get_role(DEV_ROLE_ID)
-        except AttributeError:
-            return False
+        return ((ctx.author.id == self.bot.owner_id)
+                 or existe_usuario_autorizado(ctx.author.id))
 
 
     async def cog_after_invoke(self, ctx: Context) -> None:
@@ -41,6 +189,7 @@ class CogAdmin(_CogABC):
         Borra los mensajes de admin después de un tiempo ejecutado
         el comando.
         """
+        await super().cog_after_invoke(ctx)
         await ctx.message.delete(delay=5.0)
 
 
@@ -53,8 +202,7 @@ class CogAdmin(_CogABC):
         solamente del servidor de donde este comando fue invocado.
         """
         guild_id = interaccion.guild.id
-        dic_propiedades = cargar_json(PROPERTIES_FILE)
-        prefijo_viejo = dic_propiedades['prefijos'][str(guild_id)]
+        prefijo_viejo = get_prefijo_guild(guild_id=guild_id)
 
         if prefijo_viejo == nuevo_prefijo:
             await interaccion.response.send_message(f'Cariño, `{nuevo_prefijo}` *ya es* el prefijo ' +
@@ -62,28 +210,13 @@ class CogAdmin(_CogABC):
                                                     ephemeral=True)
             return
 
-        
-        dic_propiedades['prefijos'][str(guild_id)] = nuevo_prefijo
-        guardar_json(dic_propiedades, PROPERTIES_FILE)
+        actualizar_prefijo(nuevo_prefijo, guild_id)
 
         await interaccion.response.send_message('**[AVISO]** El prefijo de los comandos fue cambiado de ' +
                                                 f'`{prefijo_viejo}` a `{nuevo_prefijo}` exitosamente.',
                                                 ephemeral=True)
         self.bot.log.info(f'El prefijo en {interaccion.guild.name!r} fue cambiado de ' +
                           f'{prefijo_viejo!r} a {nuevo_prefijo!r} exitosamente.')
-
-
-    @appcommand(name="flush",
-                description="[ADMIN] Vacía el log.")
-    async def logflush(self, interaccion: Interaction):
-        """
-        Vacía el archivo de registros.
-        """
-
-        with open(LOG_PATH, mode='w', encoding="utf-8"):
-            await interaccion.response.send_message("**[INFO]** Vaciando el log en " +
-                                                    f"`{LOG_PATH}`...",
-                                                    ephemeral=True)
 
 
     async def _desconectar_clientes_de_voz(self) -> None:
@@ -113,7 +246,7 @@ class CogAdmin(_CogABC):
             self.bot.log.error(mensaje)
             return
 
-        mensaje = f"Reiniciando bot **{str(self.bot.user)}...**"
+        mensaje = f"Reiniciando **{str(self.bot.user)}...**"
 
         await interaccion.response.send_message(content=mensaje,
                                                 ephemeral=True)
