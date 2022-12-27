@@ -8,6 +8,7 @@ from os import getenv
 from dotenv import load_dotenv
 
 from .botshot import BotShot
+from .db import ejecutar_script
 
 load_dotenv()
 

@@ -141,3 +141,12 @@ def get_recomendaciones_carpetas() -> list[tuple[str, str, int]]:
         datos.append(dato[1:])
 
     return datos
+
+
+def get_usuarios_autorizados() -> list[Tuple[int, str, int]]:
+    """
+    Devuelve los datos de los usuarios autorizados.
+    """
+
+    return sacar_datos_de_tabla(tabla="usuarios_autorizados",
+                                sacar_uno=False)

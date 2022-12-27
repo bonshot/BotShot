@@ -10,8 +10,7 @@ from discord.app_commands import describe
 from discord.ext.commands import Context
 
 from ..archivos import unir_ruta
-from ..constantes import DEV_ROLE_ID
-from ..db.atajos import get_imagenes_path
+from ..db.atajos import get_imagenes_path, existe_usuario_autorizado
 from ..interfaces import CreadorCarpetas, DestructorCarpetas
 from .cog_abc import _CogABC
 
@@ -30,10 +29,8 @@ class CogDirs(_CogABC):
         Verifica si el que invoca el comando es un admin o un dev.
         """
 
-        try:
-            return ctx.author.get_role(DEV_ROLE_ID)
-        except AttributeError:
-            return False
+        return ((ctx.author.id == self.bot.owner_id)
+                 or existe_usuario_autorizado(ctx.author.id))
 
 
     @appcommand(name='mkdir',

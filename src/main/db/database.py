@@ -27,6 +27,7 @@ def crear_nueva_db(db_path: PathLike[str]="") -> None:
     with connect(db_path) as con:
         cur = con.cursor()
         cur.executescript("""--sql
+        
         CREATE TABLE propiedades (
             prop_id INTEGER PRIMARY KEY,
             nombre TEXT,
@@ -67,9 +68,41 @@ def crear_nueva_db(db_path: PathLike[str]="") -> None:
 
         CREATE TABLE usuarios_autorizados (
             id INTEGER PRIMARY KEY,
-            nombre TEXT
+            nombre TEXT,
+            discriminador INTEGER
         ) STRICT;
         """)
+
+
+def ejecutar_comando(comando: str, es_script: bool, db_path: PathLike[str]="") -> None:
+    """
+    Ejecuta un comando arbitrario, pasándolo tal cual a
+    sqlite para parsear.
+    """
+
+    with connect(db_path) as con:
+        cur = con.cursor()
+
+        if es_script:
+            cur.executescript(comando)
+        else:
+            cur.execute(comando)
+
+
+def ejecutar_linea(comando: str, db_path: PathLike[str]="") -> None:
+    """
+    Ejecuta un comando de SQL que no requiera sacar datos.
+    """
+
+    ejecutar_comando(comando, False, db_path or DEFAULT_DB)
+
+
+def ejecutar_script(comando: str, db_path: PathLike[str]="") -> None:
+    """
+    Ejecuta un comando de SQL de varias líneas.
+    """
+
+    ejecutar_comando(comando, True, db_path or DEFAULT_DB)
 
 
 def _condiciones_where(**condiciones: DictConds) -> str:

@@ -21,3 +21,12 @@ def borrar_recomendacion_carpeta(nombre_carpeta: str) -> None:
 
     borrar_datos_de_tabla(tabla="carpetas_recomendadas",
                           recomendacion=nombre_carpeta)
+
+
+def borrar_usuario_autorizado(id_usuario: int) -> None:
+    """
+    Elimina la autorización de un usuario de la DB.
+    """
+
+    borrar_datos_de_tabla(tabla="usuarios_autorizados",
+                          id=id_usuario)

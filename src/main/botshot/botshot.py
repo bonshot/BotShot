@@ -77,6 +77,7 @@ class BotShot(Bot):
             await self.load_extension(f".{cog_name.removesuffix(f'.{ext}')}",
                                       package="src.main.cogs")
 
+        self.log.info("Sincronizando arbol de comandos...")
         await self.tree.sync()
 
 

@@ -8,10 +8,9 @@ from discord import Interaction
 from discord.app_commands import autocomplete
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
-from discord.app_commands.checks import has_role
 
-from ..constantes import DEV_ROLE_ID
 from ..auxiliares import autocompletado_recomendaciones_carpetas
+from ..checks import es_usuario_autorizado
 from ..db.atajos import (borrar_recomendacion_carpeta,
                          get_recomendaciones_carpetas,
                          insertar_recomendacion_carpeta)
@@ -49,7 +48,7 @@ class CogRecomendaciones(_CogABC):
 
     @appcommand(name='recomendados',
                 description='[ADMIN] Muestra las carpetas recomendadas')
-    @has_role(DEV_ROLE_ID)
+    @es_usuario_autorizado()
     async def mostrar_recomendados(self, interaccion: Interaction):
         """
         Muestra una lista de los nombres de carpetas que son candidatos
@@ -72,7 +71,7 @@ class CogRecomendaciones(_CogABC):
                 description='[ADMIN] Elimina una de las recomendaciones guardadas.')
     @describe(recomendacion="El nombre de la recomendación guardada.")
     @autocomplete(recomendacion=autocompletado_recomendaciones_carpetas)
-    @has_role(DEV_ROLE_ID)
+    @es_usuario_autorizado()
     async def borrar_recomendados(self, interaccion: Interaction, recomendacion: str) -> None:
         """
         Elimina de los recomendados uno que ya estaba.

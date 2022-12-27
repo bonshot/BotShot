@@ -8,16 +8,16 @@ from discord import Attachment, ChannelType, FFmpegPCMAudio, Interaction
 from discord.app_commands import Choice, autocomplete, choices
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
-from discord.app_commands.checks import has_role
 
 from ..auxiliares import autocompletado_canales_voz
-from ..constantes import DEV_ROLE_ID
+from ..checks import es_usuario_autorizado
 from .cog_abc import _CogABC
 
 if TYPE_CHECKING:
 
-    from ..botshot import BotShot
     from discord.abc import Messageable
+
+    from ..botshot import BotShot
 
 
 class CogAudio(_CogABC):
@@ -28,8 +28,8 @@ class CogAudio(_CogABC):
     @appcommand(name="conectar",
                 description="Conecta a un canal de voz.")
     @describe(canal="El canal al que conectarse.")
-    @has_role(DEV_ROLE_ID)
     @autocomplete(canal=autocompletado_canales_voz)
+    @es_usuario_autorizado()
     async def conectar_channel(self, interaccion: Interaction, canal: Optional[str]=None) -> None:
         """
         Conecta a un canal de voz.
@@ -53,7 +53,7 @@ class CogAudio(_CogABC):
 
     @appcommand(name="desconectar",
                 description="Desconecta del canal de voz en el que esté.")
-    @has_role(DEV_ROLE_ID)
+    @es_usuario_autorizado()
     async def desconectar_channel(self, interaccion: Interaction) -> None:
         """
         Desconecta de un canal.
@@ -71,7 +71,7 @@ class CogAudio(_CogABC):
     @appcommand(name="reproducir")
     @describe(sonido="El sonido a reproducir.",
               archivo="Un archivo a reproducir.")
-    @has_role(DEV_ROLE_ID)
+    @es_usuario_autorizado()
     @choices(sonido=[Choice(name="camioncito1", value="camioncito1"),
                     Choice(name="camioncito2", value="camioncito2"),
                     Choice(name="hay_wa", value="hay_wa")])

@@ -87,3 +87,23 @@ def insertar_recomendacion_carpeta(nombre_carpeta: str,
                             llave_primaria_por_defecto=True,
                             valores=(nombre_carpeta, nombre_usuario, id_usuario))
     return True
+
+
+def registrar_usuario_autorizado(nombre: str,
+                                 discriminador: str,
+                                 id_usuario: int) -> bool:
+    """
+    Registra un usuario entre los autorizados.
+
+    Si el usuario no está repetido, devuelve 'True', sino
+    devuelve 'False'.
+    """
+
+    if existe_dato_en_tabla(tabla="usuarios_autorizados",
+                            id=id_usuario):
+        return False
+
+    insertar_datos_en_tabla(tabla="usuarios_autorizados",
+                            llave_primaria_por_defecto=False,
+                            valores=(id_usuario, nombre, discriminador))
+    return True
