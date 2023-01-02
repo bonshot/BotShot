@@ -4,7 +4,8 @@ información persistente.
 """
 
 from datetime import datetime
-from os import listdir, mkdir, path, remove, rmdir
+from os import PathLike, listdir, mkdir, path, remove, rmdir
+from pathlib import Path
 from random import choice
 from typing import List, Optional, TypeAlias
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -15,7 +16,7 @@ from ..db.atajos import get_backup_path, get_limite_backup_db
 DiccionarioPares: TypeAlias = dict[str, str]
 
 
-def unir_ruta(ruta: str, sub_ruta: str) -> str:
+def unir_ruta(ruta: PathLike, sub_ruta: PathLike) -> str:
     """
     Une dos rutas con diferentes caracteres segun
     el sistema operativo.
@@ -24,7 +25,7 @@ def unir_ruta(ruta: str, sub_ruta: str) -> str:
     return path.join(ruta, sub_ruta)
 
 
-def partir_ruta(path_dir: str) -> tuple[str, str]:
+def partir_ruta(path_dir: PathLike) -> tuple[str, str]:
     """
     Parte una ruta en la 'cola' de la ruta, y el resto.
     """
@@ -32,7 +33,7 @@ def partir_ruta(path_dir: str) -> tuple[str, str]:
     return path.split(path_dir)
 
 
-def crear_dir(ruta: str) -> None:
+def crear_dir(ruta: PathLike) -> None:
     """
     Crea un nuevo directorio en la ruta especificada.
     """
@@ -40,7 +41,7 @@ def crear_dir(ruta: str) -> None:
     mkdir(ruta)
 
 
-def borrar_dir(ruta: str) -> None:
+def borrar_dir(ruta: PathLike) -> None:
     """
     Intenta borrar el directorio especificado.
     """
@@ -48,50 +49,65 @@ def borrar_dir(ruta: str) -> None:
     rmdir(ruta)
 
 
-def lista_carpetas(ruta: str) -> list[str]:
+def lista_nombre_carpetas(ruta: PathLike) -> list[PathLike]:
     """
-    Devuelve una lista de todas las carpetas que haya en la ruta
-    indicada.
+    Devuelve una lista de los nombres de todas las carpetas
+    que haya en la ruta indicada.
     """
     return [dir for dir in listdir(ruta) if path.isdir(unir_ruta(ruta, dir))]
 
 
-def lista_archivos(ruta: str, ext: Optional[str]=None) -> List[str]:
+def lista_nombre_archivos(ruta: PathLike, ext: Optional[str]=None) -> List[PathLike]:
     """
     Busca en la ruta especificada si hay archivos, y devuelve una lista
-    con los nombres de los que encuentre.
+    con los nombres (no las rutas) de los que encuentre.
 
     Si `ext` no es `None`, entonces probará buscando archivos con esa extensión.
     `ext` NO debe tener un punto (`.`) adelante, es decir que `"py"` será automáticamente
     tratado como `.py`.
     """
 
-    return [file for file in listdir(ruta) if ((not path.isdir(unir_ruta(ruta, file)))
+    return [file for file in listdir(ruta) if ((path.isfile(unir_ruta(ruta, file)))
                                                and (file.endswith(f".{ext}") if ext else True))]
 
 
-def carpeta_random(ruta: str) -> str:
+def buscar_archivos(patron: str="*", nombre_ruta: Optional[PathLike]=None, recursivo: bool=True) -> list[PathLike]:
+    """
+    Busca recursivamente en todas las subrutas por los archivos
+    que coincidan con el patrón dado.
+    Si `ruta` no está definida se usa el directorio actual.
+    """
+
+    ruta = Path(nombre_ruta if nombre_ruta is not None else ".")
+
+    return list(fpath.as_posix() for fpath in (ruta.rglob(patron) if recursivo else ruta.glob(patron)))
+
+
+def carpeta_random(ruta: PathLike) -> PathLike:
     """
     Devuelve la ruta a una carpeta aleatoria dentro de una ruta
     indicada.
     """
-    return unir_ruta(ruta, choice(lista_carpetas(ruta)))
+    return unir_ruta(ruta, choice(lista_nombre_carpetas(ruta)))
 
 
-def archivo_random(ruta: str) -> str:
+def archivo_random(ruta: PathLike, incluir_subcarpetas: bool=True) -> PathLike:
     """
     Devuelve un archivo aleatorio dentro de una ruta indicada.
+
+    Si 'incluir_subcarpetas' es `True`, entonces busca recursivamente
+    en los subdirectorios también.
     """
-    return unir_ruta(ruta, choice(lista_archivos(ruta)))
+    return choice(buscar_archivos(nombre_ruta=ruta, recursivo=incluir_subcarpetas))
 
 
-def tiene_subcarpetas(path_dir: str) -> bool:
+def tiene_subcarpetas(path_dir: PathLike) -> bool:
     """
     Verifica si una carpetas tiene carpetas hijas.
     """
 
-    for elemento in listdir(path_dir):
-        if path.isdir(unir_ruta(path_dir, elemento)):
+    for elemento in Path(path_dir).iterdir():
+        if elemento.is_dir():
             return True
 
     return False
@@ -107,7 +123,7 @@ def hacer_backup_db() -> bool:
     """
 
     db_backup_path = f"{get_backup_path()}/db"
-    lista_dir = lista_archivos(db_backup_path)
+    lista_dir = lista_nombre_archivos(db_backup_path)
     res = True
 
     if len(lista_dir) >= get_limite_backup_db():

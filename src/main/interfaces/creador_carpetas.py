@@ -8,7 +8,7 @@ from discord import ButtonStyle, Interaction
 from discord import PartialEmoji as Emoji
 from discord.ui import Button, button
 
-from ..archivos import crear_dir, lista_carpetas, partir_ruta, unir_ruta
+from ..archivos import crear_dir, lista_nombre_carpetas, partir_ruta, unir_ruta
 from ..db.atajos import get_imagenes_path
 from .selector_carpetas import MenuCarpetas, SelectorCarpeta
 
@@ -52,9 +52,9 @@ class MenuCreadorCarpetas(MenuCarpetas):
         Procesa la opción elegida.
         """
         eleccion = self.values[0]
-        if lista_carpetas(self.path):
+        if lista_nombre_carpetas(self.path):
             self.path = unir_ruta(self.path, eleccion)
-        carpetas_siguientes = lista_carpetas(self.path)
+        carpetas_siguientes = lista_nombre_carpetas(self.path)
 
         if await self.seguir(carpetas_siguientes, interaction):
             return

@@ -11,7 +11,7 @@ from discord import Intents, Message
 from discord.ext.commands import Bot
 from discord.utils import utcnow
 
-from ..archivos import lista_archivos
+from ..archivos import lista_nombre_archivos
 from ..auxiliares import get_prefijo
 from ..db.atajos import get_botshot_id, get_cogs_path, actualizar_guild
 from ..logger import BotLogger
@@ -70,7 +70,7 @@ class BotShot(Bot):
 
         ext = "py"
 
-        for cog_name in lista_archivos(get_cogs_path(), ext=ext):
+        for cog_name in lista_nombre_archivos(get_cogs_path(), ext=ext):
             if cog_name == "__init__.py":
                 continue
 

@@ -10,7 +10,7 @@ from discord import SelectOption
 from discord.enums import ButtonStyle
 from discord.ui import Button, Select, View, button
 
-from ..archivos import lista_carpetas, partir_ruta, unir_ruta
+from ..archivos import lista_nombre_carpetas, partir_ruta, unir_ruta
 from ..db.atajos import get_imagenes_path
 
 
@@ -54,7 +54,7 @@ class MenuCarpetas(Select):
         """
         eleccion = self.values[0]
         self.path = unir_ruta(self.path, eleccion)
-        carpetas_actuales = lista_carpetas(self.path)
+        carpetas_actuales = lista_nombre_carpetas(self.path)
 
         if await self.seguir(carpetas_actuales, interaction):
             return
@@ -128,7 +128,7 @@ class SelectorCarpeta(View):
         """
         Calcula las carpetas que hay en la ruta actual.
         """
-        return lista_carpetas(self.ruta)
+        return lista_nombre_carpetas(self.ruta)
 
 
     @property

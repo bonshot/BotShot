@@ -8,7 +8,7 @@ from discord import File, Interaction
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
 
-from ..archivos import archivo_random, carpeta_random, tiene_subcarpetas
+from ..archivos import archivo_random
 from ..db.atajos import get_imagenes_path
 from .cog_abc import _CogABC
 
@@ -39,14 +39,10 @@ class CogImagenes(_CogABC):
                                                              f'es `{limite}`.')
         else:
             await interaccion.response.send_message(content='Disfruta de tu porno, puerco de mierda ' +
-                                                    f'{interaccion.user.mention}',)
+                                                             f'{interaccion.user.mention}')
 
-        for i in range(cantidad):
-            while tiene_subcarpetas(path_archivo):
-                path_archivo = carpeta_random(path_archivo)
-
-            arch = File(archivo_random(path_archivo))
-            await interaccion.channel.send(content=f'**||{arch.filename}||**',
+        arch = File(archivo_random(path_archivo))
+        await interaccion.channel.send(content=f'**||{arch.filename}||**',
                                         file=arch)
 
 
