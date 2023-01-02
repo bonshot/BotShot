@@ -227,6 +227,8 @@ class CogAdmin(_CogABC):
         self.bot.log.info("Cerrando conexiones de voz...")
 
         for client in self.bot.voice_clients:
+            if client.is_playing() or client.is_paused():
+                client.stop()
             await client.disconnect()
 
 

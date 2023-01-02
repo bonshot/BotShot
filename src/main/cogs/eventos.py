@@ -4,15 +4,19 @@ Cog para el handler de navegador de carpetas.
 
 from typing import TYPE_CHECKING
 
-from discord import Guild, Message
+from discord import FFmpegPCMAudio, Guild, Member, Message, VoiceState
 from discord.ext.commands import Cog, Context
 
+from ..archivos import archivo_random
 from ..checks import es_canal_escuchado, mensaje_tiene_imagen
-from ..db.atajos import actualizar_guild
+from ..db.atajos import actualizar_guild, get_sonidos_path
 from ..interfaces import ConfirmacionGuardar
 from .cog_abc import _CogABC
 
 if TYPE_CHECKING:
+
+    from discord import Member
+    from discord.abc import GuildChannel
 
     from ..botshot import BotShot
 
@@ -79,6 +83,47 @@ class CogEventos(_CogABC):
         Escucha si se completó el comando escrito.
         """
         self.bot.log.info(f'{ctx.author} ha invocado "{ctx.command}" satisfactoriamente')
+
+
+    @Cog.listener()
+    async def on_voice_state_update(self,
+                                    member: Member,
+                                    _before: VoiceState,
+                                    after: VoiceState) -> None:
+        """
+        Escucha si un miembro del guild cambió su estado de voz.
+        """
+
+        if after.channel is not None:
+            await self._alguien_se_une_a_canal_de_voz(member, after.channel)
+
+
+    async def _alguien_se_une_a_canal_de_voz(self,
+                                             miembro: "Member",
+                                             canal: "GuildChannel") -> None:
+        """
+        Procesa el evento en el que un miembro de un guild
+        se unió al mismo canal de voz que el bot.
+        """
+
+        cl_audio = canal.guild.voice_client
+        if (miembro == self.bot.user
+            or canal != cl_audio.channel):
+            return
+
+        ruta_sonidos = get_sonidos_path()
+        sonido = (archivo_random(f"{ruta_sonidos}/bienvenida/{miembro.id}")
+                  or archivo_random(f"{ruta_sonidos}/bienvenida/generico"))
+
+        self.bot.log.info(f"{miembro.display_name!r} se conectó al canal de voz {canal.name!r} " +
+                          f"en {canal.guild.name!r}")
+
+        if sonido is None:
+            return
+
+        if cl_audio.is_playing():
+            cl_audio.stop()
+        cl_audio.play(FFmpegPCMAudio(sonido))
 
 
 async def setup(bot: "BotShot"):

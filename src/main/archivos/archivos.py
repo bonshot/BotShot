@@ -71,7 +71,11 @@ def lista_nombre_archivos(ruta: PathLike, ext: Optional[str]=None) -> List[PathL
                                                and (file.endswith(f".{ext}") if ext else True))]
 
 
-def buscar_archivos(patron: str="*", nombre_ruta: Optional[PathLike]=None, recursivo: bool=True) -> list[PathLike]:
+def buscar_rutas(patron: str="*",
+                 nombre_ruta: Optional[PathLike]=None,
+                 recursivo: bool=True,
+                 incluye_archivos: bool=True,
+                 incluye_carpetas: bool=True) -> list[PathLike]:
     """
     Busca recursivamente en todas las subrutas por los archivos
     que coincidan con el patrón dado.
@@ -80,25 +84,63 @@ def buscar_archivos(patron: str="*", nombre_ruta: Optional[PathLike]=None, recur
 
     ruta = Path(nombre_ruta if nombre_ruta is not None else ".")
 
-    return list(fpath.as_posix() for fpath in (ruta.rglob(patron) if recursivo else ruta.glob(patron)))
+    return list(fpath.as_posix() for fpath in (ruta.rglob(patron) if recursivo else ruta.glob(patron))
+                if (fpath.is_file() if incluye_archivos else False
+                    or fpath.is_dir() if incluye_carpetas else False))
 
 
-def carpeta_random(ruta: PathLike) -> PathLike:
+def buscar_archivos(patron: str="*",
+                    nombre_ruta: Optional[PathLike]=None,
+                    recursivo: bool=True) -> list[PathLike]:
+    """
+    Busca recursivamente en todas las subrutas por las rutas
+    que coincidan con el patrón dado.
+    Si `ruta` no está definida se usa el directorio actual.
+    """
+
+    return buscar_rutas(patron=patron,
+                        nombre_ruta=nombre_ruta,
+                        recursivo=recursivo,
+                        incluye_archivos=True,
+                        incluye_carpetas=False)
+
+
+def buscar_carpetas(patron: str="*",
+                    nombre_ruta: Optional[PathLike]=None,
+                    recursivo: bool=True) -> list[PathLike]:
+    """
+    Busca recursivamente en todas las subrutas por las carpetas
+    que coincidan con el patrón dado.
+    Si `ruta` no está definida se usa el directorio actual.
+    """
+
+    return buscar_rutas(patron=patron,
+                        nombre_ruta=nombre_ruta,
+                        recursivo=recursivo,
+                        incluye_archivos=False,
+                        incluye_carpetas=True)
+
+
+def carpeta_random(ruta: PathLike, incluir_subcarpetas: bool=True) -> Optional[PathLike]:
     """
     Devuelve la ruta a una carpeta aleatoria dentro de una ruta
     indicada.
     """
-    return unir_ruta(ruta, choice(lista_nombre_carpetas(ruta)))
+    opciones = buscar_carpetas(nombre_ruta=ruta, recursivo=incluir_subcarpetas)
+    return choice(opciones) if opciones else None
 
 
-def archivo_random(ruta: PathLike, incluir_subcarpetas: bool=True) -> PathLike:
+def archivo_random(ruta: PathLike, incluir_subcarpetas: bool=True) -> Optional[PathLike]:
     """
-    Devuelve un archivo aleatorio dentro de una ruta indicada.
+    Devuelve un archivo aleatorio dentro de una ruta indicada. Si no hay
+    nada en el directorio devuelve `None`.
 
     Si 'incluir_subcarpetas' es `True`, entonces busca recursivamente
     en los subdirectorios también.
     """
-    return choice(buscar_archivos(nombre_ruta=ruta, recursivo=incluir_subcarpetas))
+
+    opciones = buscar_archivos(nombre_ruta=ruta, recursivo=incluir_subcarpetas)
+    return choice(opciones) if opciones else None
 
 
 def tiene_subcarpetas(path_dir: PathLike) -> bool:

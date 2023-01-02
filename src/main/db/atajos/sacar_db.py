@@ -3,7 +3,7 @@ Módulo para atajos de sacar datos de una DB.
 """
 
 from os import PathLike
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Tuple
 
 from ..database import sacar_datos_de_tabla
 
@@ -87,6 +87,12 @@ def get_backup_path() -> PathLike:
     "Consigue el path de los backups."
 
     return get_path_de_db("backup")
+
+
+def get_sonidos_path() -> PathLike:
+    "Consigue el path de los sonidos."
+
+    return get_path_de_db("sonidos")
 
 
 def get_prefijo_guild(guild_id: int) -> str:
