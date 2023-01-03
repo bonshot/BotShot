@@ -2,7 +2,7 @@
 Módulo para funciones de autocompletado.
 """
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from discord import ChannelType, Interaction
 from discord.app_commands import Choice
@@ -10,6 +10,10 @@ from discord.app_commands import Choice
 from ..archivos import buscar_archivos, partir_ruta
 from ..db.atajos import (get_canales_escuchados, get_recomendaciones_carpetas,
                          get_sonidos_path, get_usuarios_autorizados)
+
+if TYPE_CHECKING:
+
+    from os import PathLike
 
 
 async def autocompletado_canales(interaccion: Interaction,
@@ -110,15 +114,41 @@ async def autocompletado_usuarios_autorizados(_interaccion: Interaction,
     ][:25]
 
 
-async def autocompletado_archivos_audio(_interaccion: Interaction,
+async def autocompletado_ruta(interaccion: Interaction,
+                              current: str,
+                              ruta_actual: "PathLike") -> list[Choice[str]]:
+    """
+    Devuelve todos los archivos en una ruta.
+    """
+
+    return [
+        Choice(name=partir_ruta(ruta)[1], value=ruta)
+        for ruta in buscar_archivos(nombre_ruta=ruta_actual)
+        if current.lower() in ruta.lower()
+    ][:25]
+
+
+async def autocompletado_archivos_audio(interaccion: Interaction,
                                         current: str) -> list[Choice[str]]:
     """
     Devuelve todos los archivos de audio bajo el directorio
     de sonidos.
     """
 
-    return [
-        Choice(name=partir_ruta(ruta)[1], value=ruta)
-        for ruta in buscar_archivos(nombre_ruta=get_sonidos_path())
-        if current.lower() in ruta.lower()
-    ][:25]
+    return await autocompletado_ruta(interaccion=interaccion,
+                                     current=current,
+                                     ruta_actual=get_sonidos_path())
+
+
+async def autocompletado_sonidos_usuario(interaccion: Interaction,
+                                         current: str) -> list[Choice[str]]:
+    """
+    Devuelve todos los archivos de audio bajo la carpeta de bienvenida
+    de un usuario en concreto.
+    """
+
+    usuario_id = interaccion.user.id
+
+    return await autocompletado_ruta(interaccion=interaccion,
+                                     current=current,
+                                     ruta_actual=f"{get_sonidos_path()}/bienvenida/{usuario_id}")

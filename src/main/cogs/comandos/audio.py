@@ -11,10 +11,11 @@ from discord.app_commands import describe
 from discord.app_commands.errors import CheckFailure
 from tinytag import TinyTag
 
-from ...archivos import borrar_archivo, repite_nombre
+from ...archivos import borrar_archivo, existe, repite_nombre
 from ...auxiliares import (autocompletado_archivos_audio,
                            autocompletado_canales_voz,
-                           autocompletado_miembros_guild)
+                           autocompletado_miembros_guild,
+                           autocompletado_sonidos_usuario)
 from ...checks import es_usuario_autorizado
 from ...db.atajos import get_sonidos_path
 from ...enums import RestriccionesSonido
@@ -278,31 +279,23 @@ class GrupoSonido(_GrupoABC):
 
     @appcommand(name="quitar",
                 description="Elimina un sonido asignado a un usuario.")
-    @describe(sonido="El sonido a quitar.",
-              usuario="El usuario al que quitarle el sonido.")
-    @autocomplete(usuario=autocompletado_miembros_guild)
+    @describe(sonido="El sonido a quitar.")
+    @autocomplete(sonido=autocompletado_sonidos_usuario)
     async def quitar_sonido(self,
                             interaccion: Interaction,
-                            sonido: str,
-                            usuario: Optional[str]=None) -> None:
+                            sonido: str) -> None:
         """
         Elimina un sonido asignado a un usuario.
         """
 
-        autor = interaccion.user
-
-        if usuario is not None and not self.bot.es_admin(autor.id):
-            await interaccion.response.send_message(content=f"{autor.mention}, señor, usted no " +
-                                                     "tiene permiso para eliminar los sonidos " +
-                                                     "de los demás.",
+        if not existe(sonido):
+            await interaccion.response.send_message(f"El sonido en cuestión `{sonido}` " +
+                                                     "no existe.",
                                                     ephemeral=True)
-            return
 
-        if usuario is None:
-            usuario: "Member" = autor
-        else:
-            usuario: "Member" = interaccion.guild.get_member(int(usuario))
-
+        borrar_archivo(sonido)
+        await interaccion.response.send_message(f"*Eliminado sonido en* `{sonido}`*...*",
+                                                ephemeral=True)
 
 class CogAudio(_CogABC):
     """
