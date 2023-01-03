@@ -12,19 +12,6 @@ class BotLogger:
     Registrador para el bot.
     """
 
-    def __new__(cls) -> "BotLogger":
-        """
-        Devuelva la instancia de la clase, que
-        debe ser única en todo momento.
-        """
-
-        if not hasattr(cls, "_instancia"):
-
-            cls._instancia = super(BotLogger, cls).__new__(cls)
-
-        return cls._instancia
-
-
     def __init__(self,
                  *,
                  nombre_log: str='botshot',

@@ -61,6 +61,7 @@ class BotShot(Bot):
                          application_id=get_botshot_id(),
                          options=opciones)
 
+        self.log: BotLogger = BotLogger()
         self.despierto_desde: "datetime" = utcnow()
 
 
@@ -100,15 +101,6 @@ class BotShot(Bot):
         self.log.info("[DB] Actualizando guilds...")
         for guild in self.guilds:
             actualizar_guild(guild.id, guild.name)
-
-
-    @property
-    def log(self) -> BotLogger:
-        """
-        Devuelve el logger asignado a botshot.
-        """
-
-        return BotLogger()
 
 
     @property
