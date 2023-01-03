@@ -9,18 +9,29 @@ from discord.app_commands import AppCommandError, autocomplete
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
 from discord.app_commands.errors import CheckFailure
+from tinytag import TinyTag
 
-from ..auxiliares import (autocompletado_archivos_audio,
-                          autocompletado_canales_voz)
-from ..checks import es_usuario_autorizado
-from ..db.atajos import existe_usuario_autorizado
-from .cog_abc import GroupsList, _CogABC, _GrupoABC
+from ...archivos import borrar_archivo, repite_nombre
+from ...auxiliares import (autocompletado_archivos_audio,
+                           autocompletado_canales_voz,
+                           autocompletado_miembros_guild)
+from ...checks import es_usuario_autorizado
+from ...db.atajos import get_sonidos_path
+from ...enums import RestriccionesSonido
+from ..cog_abc import GroupsList, _CogABC, _GrupoABC
 
 if TYPE_CHECKING:
 
+    from os import PathLike
+
+    from discord import Member
     from discord.abc import GuildChannel
 
-    from ..botshot import BotShot
+    from ...botshot import BotShot
+
+
+TAMANIO_MAXIMO_AUDIO: int = 8388608 # 8 MB en bytes
+DURACION_MAXIMA_AUDIO: int = 8 # en segundos
 
 
 class GrupoAudio(_GrupoABC):
@@ -43,8 +54,7 @@ class GrupoAudio(_GrupoABC):
         Verifica si el usuario está autorizado.
         """
 
-        return ((interaccion.user.id == self.bot.owner_id)
-                 or existe_usuario_autorizado(interaccion.user.id)
+        return (self.bot.es_admin(interaccion.user.id)
                 and interaccion.guild.voice_client is not None)
 
 
@@ -91,7 +101,9 @@ class GrupoAudio(_GrupoABC):
             await self._reproducir_archivo_sonido(interaccion, archivo)
 
 
-    async def _reproducir_sonido_cargado(self, interaccion: Interaction, ruta_sonido: str) -> None:
+    async def _reproducir_sonido_cargado(self,
+                                         interaccion: Interaction,
+                                         ruta_sonido: str) -> None:
         """
         Reproduce un sonido buscándolo en las carpetas que botshot tiene.
         """
@@ -102,7 +114,9 @@ class GrupoAudio(_GrupoABC):
                                                 ephemeral=True)
 
 
-    async def _reproducir_archivo_sonido(self, interaccion: Interaction, archivo: Attachment) -> None:
+    async def _reproducir_archivo_sonido(self,
+                                         interaccion: Interaction,
+                                         archivo: Attachment) -> None:
         """
         Reproduce un sonido proveniente de un archivo subido.
         """
@@ -166,6 +180,130 @@ class GrupoAudio(_GrupoABC):
                                                 ephemeral=True)
 
 
+class GrupoSonido(_GrupoABC):
+    """
+    Grupo para comandos de sonidos, que tanto no
+    tienen que ver con controles del reproductor.
+    """
+
+    def __init__(self, bot: "BotShot") -> None:
+        """
+        Inicializa una instancia de 'GrupoSonido'.
+        """
+
+        super().__init__(bot,
+                         name="sonido",
+                         description="Comandos para interactuar con sonidos en general.")
+
+
+    @appcommand(name="agregar",
+                description="Registra un nuevo sonido para un usuario.")
+    @describe(audio="El sonido a procesar.",
+              usuario="El usuario al que asignarle el nuevo audio.")
+    @autocomplete(usuario=autocompletado_miembros_guild)
+    async def agregar_sonido(self,
+                             interaccion: Interaction,
+                             audio: Attachment,
+                             usuario: Optional[str]=None) -> None:
+        """
+        Agrega un sonido asignado a un usuario.
+        """
+
+        if (audio.content_type is None 
+            or "audio" not in audio.content_type):
+
+            await interaccion.response.send_message(content="*Este archivo no es de audio. >:(*",
+                                                   ephemeral=True)
+            return
+
+        autor = interaccion.user
+
+        if usuario is not None and not self.bot.es_admin(autor.id):
+            await interaccion.response.send_message(content=f"{autor.mention}, señor, usted no " +
+                                                     "tiene permiso para modificar los sonidos " +
+                                                     "de los demás.",
+                                                    ephemeral=True)
+            return
+
+        if usuario is None:
+            usuario: "Member" = autor
+        else:
+            usuario: "Member" = interaccion.guild.get_member(int(usuario))
+
+        audio_fn = audio.filename
+        ruta_temp = repite_nombre(f"{get_sonidos_path()}/bienvenida/{usuario.id}/{audio_fn}")
+        await audio.save(ruta_temp)
+        resultado = self._analizar_archivo_audio(ruta_temp)
+
+        if resultado:
+            restrs = ""
+            borrar_archivo(ruta_temp)
+            for restr, err in resultado:
+                restrs += f"\n\t- **{restr.value}:** {err}."
+
+            mensaje = (f"**[ERROR]** El archivo no cumple con los requisitos.\n\n" +
+                       f">>> Restricciones violadas:\n{restrs}")
+        else:
+            mensaje = f"Agregando sonido `{audio_fn}` para **{usuario.display_name}**..."
+
+        await interaccion.response.send_message(content=mensaje,
+                                                ephemeral=True)
+        self.bot.log.info(mensaje)
+
+
+    def _analizar_archivo_audio(self,
+                                ruta_audio: "PathLike") -> list[tuple[RestriccionesSonido, str]]:
+        """
+        Analiza un archivo de audio.
+        Devuelve una lista con las restricciones violadas que se encontraron, junto con un mensaje
+        de error; o una lista vacía si el archivo pasa las pruebas.
+        """
+
+        resultado = []
+        tags = TinyTag.get(ruta_audio)
+
+        if tags.filesize > TAMANIO_MAXIMO_AUDIO: # No más de 8 MB
+            mb = 1048576 # 1 Mb en b
+            resultado.append((RestriccionesSonido.MUY_PESADO,
+                              (f"El archivo pesa `{round(tags.filesize / mb, 3)} MB`, debería " +
+                              f"ser como máximo `{TAMANIO_MAXIMO_AUDIO} MB`")))
+
+        if tags.duration > DURACION_MAXIMA_AUDIO: # No más de 8 seg
+            resultado.append((RestriccionesSonido.DEMASIADO_LARGO,
+                              (f"El audio dura `{round(tags.duration, 3)} segundos`. Se permite " +
+                               f"que sea como máximo de `{DURACION_MAXIMA_AUDIO} segundos`")))
+
+        return resultado
+
+
+    @appcommand(name="quitar",
+                description="Elimina un sonido asignado a un usuario.")
+    @describe(sonido="El sonido a quitar.",
+              usuario="El usuario al que quitarle el sonido.")
+    @autocomplete(usuario=autocompletado_miembros_guild)
+    async def quitar_sonido(self,
+                            interaccion: Interaction,
+                            sonido: str,
+                            usuario: Optional[str]=None) -> None:
+        """
+        Elimina un sonido asignado a un usuario.
+        """
+
+        autor = interaccion.user
+
+        if usuario is not None and not self.bot.es_admin(autor.id):
+            await interaccion.response.send_message(content=f"{autor.mention}, señor, usted no " +
+                                                     "tiene permiso para eliminar los sonidos " +
+                                                     "de los demás.",
+                                                    ephemeral=True)
+            return
+
+        if usuario is None:
+            usuario: "Member" = autor
+        else:
+            usuario: "Member" = interaccion.guild.get_member(int(usuario))
+
+
 class CogAudio(_CogABC):
     """
     Cog para comandos de audio.
@@ -177,7 +315,7 @@ class CogAudio(_CogABC):
         Devuelve la lista de grupos asociados a este Cog.
         """
 
-        return [GrupoAudio]
+        return [GrupoAudio, GrupoSonido]
 
 
     @appcommand(name="conectar",
@@ -219,7 +357,8 @@ class CogAudio(_CogABC):
         else: # Si se conecta por primera vez
             await canal.connect()
 
-        await interaccion.response.send_message(content=f"Ya me {'reconecté' if es_mismo_canal else 'conecté'}!",
+        reconexion = "reconecté" if es_mismo_canal else "conecté"
+        await interaccion.response.send_message(content=f"Ya me {reconexion}!",
                                                 ephemeral=True)
 
         self.bot.log.info(f"{'Reconectado' if es_mismo_canal else 'Conectado'} al canal de voz " +
@@ -237,7 +376,8 @@ class CogAudio(_CogABC):
         cl_voz = interaccion.guild.voice_client
 
         if cl_voz is None:
-            await interaccion.response.send_message(content="No estoy conectado a ningún canal de voz.",
+            await interaccion.response.send_message(content=("No estoy conectado a ningún " +
+                                                             "canal de voz."),
                                                     ephemeral=True)
             return
 

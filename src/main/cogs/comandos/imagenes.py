@@ -8,13 +8,13 @@ from discord import File, Interaction
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
 
-from ..archivos import archivo_random
-from ..db.atajos import get_imagenes_path
-from .cog_abc import _CogABC
+from ...archivos import archivo_random
+from ...db.atajos import get_imagenes_path
+from ..cog_abc import _CogABC
 
 if TYPE_CHECKING:
 
-    from ..botshot import BotShot
+    from ...botshot import BotShot
 
 
 class CogImagenes(_CogABC):

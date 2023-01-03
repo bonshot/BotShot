@@ -9,14 +9,14 @@ from discord.app_commands import command as appcommand
 from discord.app_commands import describe
 from discord.ext.commands import Context
 
-from ..archivos import unir_ruta
-from ..db.atajos import get_imagenes_path, existe_usuario_autorizado
-from ..interfaces import CreadorCarpetas, DestructorCarpetas
-from .cog_abc import _CogABC
+from ...archivos import unir_ruta
+from ...db.atajos import existe_usuario_autorizado, get_imagenes_path
+from ...interfaces import CreadorCarpetas, DestructorCarpetas
+from ..cog_abc import _CogABC
 
 if TYPE_CHECKING:
 
-    from ..botshot import BotShot
+    from ...botshot import BotShot
 
 
 class CogDirs(_CogABC):

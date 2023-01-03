@@ -11,9 +11,10 @@ from discord import Intents, Message
 from discord.ext.commands import Bot
 from discord.utils import utcnow
 
-from ..archivos import lista_nombre_archivos
+from ..archivos import buscar_archivos
 from ..auxiliares import get_prefijo
-from ..db.atajos import get_botshot_id, get_cogs_path, actualizar_guild
+from ..db.atajos import (actualizar_guild, existe_usuario_autorizado,
+                         get_botshot_id, get_cogs_path)
 from ..logger import BotLogger
 
 if TYPE_CHECKING:
@@ -68,14 +69,23 @@ class BotShot(Bot):
         Reliza acciones iniciales que el bot necesita.
         """
 
+        await self.cargar_cogs()
+
+
+    async def cargar_cogs(self) -> None:
+        """
+        Busca y carga recursivamente todos los cogs
+        del bot.
+        """
+
         ext = "py"
 
-        for cog_name in lista_nombre_archivos(get_cogs_path(), ext=ext):
-            if cog_name == "__init__.py":
-                continue
+        for ruta_cog in buscar_archivos(patron=f"*.{ext}",
+                                        nombre_ruta=get_cogs_path(),
+                                        ignorar_patrones=("__init__.*", "*_abc.*")):
 
-            await self.load_extension(f".{cog_name.removesuffix(f'.{ext}')}",
-                                      package="src.main.cogs")
+            self.log.info(f"[COG] Cargando cog {ruta_cog!r}")
+            await self.load_extension(ruta_cog.removesuffix(f".{ext}").replace("/", "."))
 
         self.log.info("Sincronizando arbol de comandos...")
         await self.tree.sync()
@@ -108,3 +118,13 @@ class BotShot(Bot):
         """
 
         return utcnow() - self.despierto_desde
+
+
+    def es_admin(self, user_id: int) -> bool:
+        """
+        Verifica si el id de un usuario pertenece al
+        de uno autorizado a usar BotShot.
+        """
+
+        return (user_id == self.owner_id
+                or existe_usuario_autorizado(user_id))

@@ -122,4 +122,3 @@ async def autocompletado_archivos_audio(_interaccion: Interaction,
         for ruta in buscar_archivos(nombre_ruta=get_sonidos_path())
         if current.lower() in ruta.lower()
     ][:25]
-

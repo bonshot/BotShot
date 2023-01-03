@@ -7,22 +7,22 @@ from sys import executable as sys_executable
 from typing import TYPE_CHECKING, Optional
 
 from discord import Interaction
-from discord.app_commands.errors import CheckFailure
 from discord.app_commands import AppCommandError, autocomplete
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
+from discord.app_commands.errors import CheckFailure
 from discord.ext.commands import Context
 
-from ..auxiliares import (autocompletado_miembros_guild,
-                          autocompletado_usuarios_autorizados)
-from ..db.atajos import (actualizar_prefijo, borrar_usuario_autorizado,
-                         existe_usuario_autorizado, get_log_path,
-                         get_prefijo_guild, registrar_usuario_autorizado)
-from .cog_abc import GroupsList, _CogABC, _GrupoABC
+from ...auxiliares import (autocompletado_miembros_guild,
+                           autocompletado_usuarios_autorizados)
+from ...db.atajos import (actualizar_prefijo, borrar_usuario_autorizado,
+                          existe_usuario_autorizado, get_log_path,
+                          get_prefijo_guild, registrar_usuario_autorizado)
+from ..cog_abc import GroupsList, _CogABC, _GrupoABC
 
 if TYPE_CHECKING:
 
-    from ..botshot import BotShot
+    from ...botshot import BotShot
 
 
 class GrupoAutorizar(_GrupoABC):
@@ -45,8 +45,7 @@ class GrupoAutorizar(_GrupoABC):
         Verifica si el usuario está autorizado.
         """
 
-        return ((interaccion.user.id == self.bot.owner_id)
-                 or existe_usuario_autorizado(interaccion.user.id))
+        return self.bot.es_admin(interaccion.user.id)
 
 
     async def on_error(self, interaccion: Interaction, error: AppCommandError) -> None:
@@ -55,7 +54,8 @@ class GrupoAutorizar(_GrupoABC):
         """
 
         if isinstance(error, CheckFailure):
-            mensaje = f"No no, {interaccion.user.mention}, vos quién sos para autorizar o desautorizar gente?"
+            mensaje = (f"No no, {interaccion.user.mention}, vos quién sos para autorizar " +
+                        "o desautorizar gente?")
             await interaccion.response.send_message(content=mensaje,
                                                     ephemeral=True)
             return
@@ -104,7 +104,8 @@ class GrupoAutorizar(_GrupoABC):
         user = self.bot.get_user(id_usuario)
         borrar_usuario_autorizado(id_usuario)
 
-        await interaccion.response.send_message(f"{user.display_name} fue despejado de todo poder exitosamente.",
+        await interaccion.response.send_message(f"{user.display_name} fue despejado de " +
+                                                 "todo poder exitosamente.",
                                                 ephemeral=True)
 
 
@@ -128,8 +129,7 @@ class GrupoLog(_GrupoABC):
         Verifica si el usuario está autorizado.
         """
 
-        return ((interaccion.user.id == self.bot.owner_id)
-                 or existe_usuario_autorizado(interaccion.user.id))
+        return self.bot.es_admin(interaccion.user.id)
 
 
     async def on_error(self, interaccion: Interaction, error: AppCommandError) -> None:
@@ -138,8 +138,8 @@ class GrupoLog(_GrupoABC):
         """
 
         if isinstance(error, CheckFailure):
-            await interaccion.response.send_message((f"Ay, {interaccion.user.mention}, no tenés permiso " +
-                                                     "para usar este comando."),
+            await interaccion.response.send_message((f"Ay, {interaccion.user.mention}, " +
+                                                      "no tenés permiso para usar este comando."),
                                                     ephemeral=True)
             return
 
@@ -205,15 +205,16 @@ class CogAdmin(_CogABC):
         prefijo_viejo = get_prefijo_guild(guild_id=guild_id)
 
         if prefijo_viejo == nuevo_prefijo:
-            await interaccion.response.send_message(f'Cariño, `{nuevo_prefijo}` *ya es* el prefijo ' +
-                                                    'para este server.',
+            await interaccion.response.send_message(f'Cariño, `{nuevo_prefijo}` *ya es* el ' +
+                                                     'prefijo para este server.',
                                                     ephemeral=True)
             return
 
         actualizar_prefijo(nuevo_prefijo, guild_id)
 
-        await interaccion.response.send_message('**[AVISO]** El prefijo de los comandos fue cambiado de ' +
-                                                f'`{prefijo_viejo}` a `{nuevo_prefijo}` exitosamente.',
+        await interaccion.response.send_message('**[AVISO]** El prefijo de los comandos ' +
+                                                f'fue cambiado de `{prefijo_viejo}` a ' +
+                                                f'`{nuevo_prefijo}` exitosamente.',
                                                 ephemeral=True)
         self.bot.log.info(f'El prefijo en {interaccion.guild.name!r} fue cambiado de ' +
                           f'{prefijo_viejo!r} a {nuevo_prefijo!r} exitosamente.')
@@ -248,7 +249,7 @@ class CogAdmin(_CogABC):
             self.bot.log.error(mensaje)
             return
 
-        mensaje = f"Reiniciando **{str(self.bot.user)}...**"
+        mensaje = f"Reiniciando **{str(self.bot.user.name)}**..."
 
         await interaccion.response.send_message(content=mensaje,
                                                 ephemeral=True)
@@ -264,7 +265,7 @@ class CogAdmin(_CogABC):
         """
         Cierra el Bot de manera correcta.
         """
-        adios = "¡Cerrando el Bot!"
+        adios = f"¡Cerrando **{self.bot.user.name}**!"
         await interaccion.response.send_message(content=adios,
                                                 ephemeral=True)
         self.bot.log.info(adios)

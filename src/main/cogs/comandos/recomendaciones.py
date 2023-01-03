@@ -9,16 +9,16 @@ from discord.app_commands import autocomplete
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
 
-from ..auxiliares import autocompletado_recomendaciones_carpetas
-from ..checks import es_usuario_autorizado
-from ..db.atajos import (borrar_recomendacion_carpeta,
-                         get_recomendaciones_carpetas,
-                         insertar_recomendacion_carpeta)
-from .cog_abc import _CogABC
+from ...auxiliares import autocompletado_recomendaciones_carpetas
+from ...checks import es_usuario_autorizado
+from ...db.atajos import (borrar_recomendacion_carpeta,
+                          get_recomendaciones_carpetas,
+                          insertar_recomendacion_carpeta)
+from ..cog_abc import _CogABC
 
 if TYPE_CHECKING:
 
-    from ..botshot import BotShot
+    from ...botshot import BotShot
 
 
 class CogRecomendaciones(_CogABC):

@@ -9,16 +9,16 @@ from discord.app_commands import autocomplete
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
 
-from ..auxiliares import (autocompletado_canales_escuchados,
-                          autocompletado_todos_canales)
-from ..checks import es_usuario_autorizado
-from ..db.atajos import (actualizar_canal_escuchado, borrar_canal_escuchado,
-                         get_canales_escuchados)
-from .cog_abc import GroupsList, _CogABC, _GrupoABC
+from ...auxiliares import (autocompletado_canales_escuchados,
+                           autocompletado_todos_canales)
+from ...checks import es_usuario_autorizado
+from ...db.atajos import (actualizar_canal_escuchado, borrar_canal_escuchado,
+                          get_canales_escuchados)
+from ..cog_abc import GroupsList, _CogABC, _GrupoABC
 
 if TYPE_CHECKING:
 
-    from ..botshot import BotShot
+    from ...botshot import BotShot
 
 
 class GrupoCanal(_GrupoABC):

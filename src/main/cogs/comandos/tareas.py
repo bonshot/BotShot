@@ -6,13 +6,14 @@ from typing import TYPE_CHECKING
 
 from discord.ext.tasks import loop
 
-from ..archivos import hacer_backup_db
-from .cog_abc import _CogABC
+from ...archivos import hacer_backup_db
+from ..cog_abc import _CogABC
 
 if TYPE_CHECKING:
 
-    from ..botshot import BotShot
     from discord.ext.tasks import Loop
+
+    from ...botshot import BotShot
 
 
 class CogTareas(_CogABC):

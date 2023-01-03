@@ -1,8 +1,8 @@
 # -= BotShot =-
 
-<img alt="calamardo_guapo.png" align="left" src="extra/img/references/handsome_squidward_rtx_circle.png" height=128 width=128 />
+<img alt="calamardo_guapo.png" align="left" src="media/img/references/handsome_squidward_rtx_circle.png" height=128 width=128 />
 
-![version](https://img.shields.io/badge/version-0.1.0-brightgreen)
+![version](https://img.shields.io/badge/version-0.2.0-brightgreen)
 ![estrellas](https://img.shields.io/github/stars/bonshot/BotShot?label=Estrellas&style=social)
 ![visitas](https://img.shields.io/github/watchers/bonshot/BotShot?label=Visitas&style=social)
 ![Tests](https://github.com/bonshot/BotShot/actions/workflows/tests.yml/badge.svg)
@@ -29,11 +29,13 @@ almacenarlas en un directorio designado acorde.
 [Franco "NLGS" Lighterman Reismann](https://github.com/NLGS2907)
 </p>
 
+<!--
 <p align="left">
 <img align="left" src="https://github.com/ElianaHarriet.png" height=32 width=32 />
 
 [Eliana Harriet](https://github.com/ElianaHarriet)
 </p>
+-->
 
 <hr style="height:1px; width:35%" />
 

@@ -7,18 +7,18 @@ from typing import TYPE_CHECKING
 from discord import FFmpegPCMAudio, Guild, Member, Message, VoiceState
 from discord.ext.commands import Cog, Context
 
-from ..archivos import archivo_random
-from ..checks import es_canal_escuchado, mensaje_tiene_imagen
-from ..db.atajos import actualizar_guild, get_sonidos_path
-from ..interfaces import ConfirmacionGuardar
-from .cog_abc import _CogABC
+from ...archivos import archivo_random
+from ...checks import es_canal_escuchado, mensaje_tiene_imagen
+from ...db.atajos import actualizar_guild, get_sonidos_path
+from ...interfaces import ConfirmacionGuardar
+from ..cog_abc import _CogABC
 
 if TYPE_CHECKING:
 
     from discord import Member
     from discord.abc import GuildChannel
 
-    from ..botshot import BotShot
+    from ...botshot import BotShot
 
 
 class CogEventos(_CogABC):
@@ -108,6 +108,7 @@ class CogEventos(_CogABC):
 
         cl_audio = canal.guild.voice_client
         if (miembro == self.bot.user
+            or cl_audio is None
             or canal != cl_audio.channel):
             return
 
