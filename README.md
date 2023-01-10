@@ -29,14 +29,6 @@ almacenarlas en un directorio designado acorde.
 [Franco "NLGS" Lighterman Reismann](https://github.com/NLGS2907)
 </p>
 
-<!--
-<p align="left">
-<img align="left" src="https://github.com/ElianaHarriet.png" height=32 width=32 />
-
-[Eliana Harriet](https://github.com/ElianaHarriet)
-</p>
--->
-
 <hr style="height:1px; width:35%" />
 
 * **[Enlace de Invitación]()**
