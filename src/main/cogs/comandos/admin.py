@@ -2,11 +2,12 @@
 Cog que agrupa comandos administrativos.
 """
 
+from io import StringIO
 from os import execl
 from sys import executable as sys_executable
 from typing import TYPE_CHECKING, Optional
 
-from discord import Interaction
+from discord import File, Interaction
 from discord.app_commands import AppCommandError, autocomplete
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
@@ -148,7 +149,7 @@ class GrupoLog(_GrupoABC):
 
     @appcommand(name="flush",
                 description="[ADMIN] Vacía el log.")
-    async def logflush(self, interaccion: Interaction):
+    async def logflush(self, interaccion: Interaction) -> None:
         """
         Vacía el archivo de registros.
         """
@@ -159,6 +160,67 @@ class GrupoLog(_GrupoABC):
             await interaccion.response.send_message("**[INFO]** Vaciando el log en " +
                                                     f"`{log}`...",
                                                     ephemeral=True)
+
+
+    @appcommand(name="tail",
+                description="[ADMIN] Muestra las últimas 'n' líneas del log.")
+    @describe(lineas="Cantidad de líneas a mostrar.")
+    async def logtail(self, interaccion: Interaction, lineas: int=15) -> None:
+        """
+        Muestra líneas del archivo de registros.
+        """
+
+        if lineas < 1:
+            await interaccion.response.send_message(("`lineas` debe ser un numero entero mayor " +
+                                                     f" igual a 1, no `{lineas}`."),
+                                                    ephemeral=True)
+            return
+
+        log_path = get_log_path()
+        contador = 0
+        lista_lineas = []
+
+        with open(log_path, encoding="utf-8") as arch:
+            for linea in arch:
+                if not linea.rstrip():
+                    continue
+
+                if contador >= lineas:
+                    lista_lineas.pop(0)
+                else:
+                    contador += 1
+
+                lista_lineas.append(linea)
+
+        texto_raw = ''.join(lista_lineas)
+        texto_log = (f"Mostrando últimas {lineas} líneas en `{log_path}`:" +
+                     f"\n```{texto_raw}```")
+
+        if len(texto_log) > 2000: # Maximo permitido por discord.py
+            with StringIO(texto_raw) as arch_en_memoria:
+
+                await interaccion.response.send_message(("*El archivo contiene más de 2000 " +
+                                                         "líneas.* Aquí está adjuntado:"),
+                                                        file=File(arch_en_memoria,
+                                                                  filename="log_tail.log"),
+                                                        ephemeral=True)
+        else:
+            await interaccion.response.send_message(content=texto_log,
+                                                    ephemeral=True)
+
+
+    @appcommand(name="get",
+                description="Adjunta el archivo de log.")
+    async def logget(self, interaccion: Interaction) -> None:
+        """
+        Consigue el archivo de registros.
+        """
+
+        log = File(get_log_path())
+
+        await interaccion.response.send_message(content="*Mostrando archivo de registro:*",
+                                                file=log,
+                                                ephemeral=True)
 
 
 class CogAdmin(_CogABC):

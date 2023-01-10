@@ -28,7 +28,8 @@ def mensaje_tiene_imagen(mensaje: Message) -> bool:
         return False
 
     for contenido in mensaje.attachments:
-        if "image" not in contenido.content_type:
+        if (contenido.content_type is not None
+            and "image" not in contenido.content_type):
             return False
 
     return True
