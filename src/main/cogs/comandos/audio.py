@@ -148,7 +148,7 @@ class GrupoAudio(_GrupoABC):
         obj_sonido = FFmpegPCMAudio(arch_sonido.fp, pipe=True)
         interaccion.guild.voice_client.play(obj_sonido)
 
-        await interaccion.response.send_message(content="Reproduciendo sonido...",
+        await interaccion.response.send_message(content="Reproduciendo archivo de audio...",
                                                 ephemeral=True)
 
 
