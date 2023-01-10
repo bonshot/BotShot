@@ -2,6 +2,7 @@
 Cog para comandos que trabajan con audio.
 """
 
+from io import BytesIO
 from typing import TYPE_CHECKING, Optional
 
 from discord import Attachment, ChannelType, FFmpegPCMAudio, Interaction
@@ -9,6 +10,10 @@ from discord.app_commands import AppCommandError, autocomplete
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
 from discord.app_commands.errors import CheckFailure
+from requests import codes
+from requests import get as req_get
+from requests.exceptions import (ConnectionError, InvalidSchema, InvalidURL,
+                                 MissingSchema)
 from tinytag import TinyTag
 
 from ...archivos import borrar_archivo, existe, repite_nombre
@@ -80,18 +85,27 @@ class GrupoAudio(_GrupoABC):
     @appcommand(name="play",
                 description="Reproduce un sonido.")
     @describe(sonido="El sonido a reproducir.",
-              archivo="Un archivo a reproducir.")
+              archivo="Un archivo a reproducir.",
+              link="El enlace a un archivo online. El enlace debe ser directo.")
     @autocomplete(sonido=autocompletado_archivos_audio)
     async def reproducir_sonido(self,
                                 interaccion: Interaction,
                                 sonido: Optional[str]=None,
-                                archivo: Optional[Attachment]=None) -> None:
+                                archivo: Optional[Attachment]=None,
+                                link: Optional[str]=None) -> None:
         """
         Reproduce un sonido, ya sea precargado o de archivo.
         """
-        if sonido is None == archivo is None:
-            await interaccion.response.send_message("`sonido` o `archivo` deben estar presentes," +
-                                                    "pero no ninguno o ambos a la vez.",
+
+        hay_valor = 0
+        for valor in (sonido, archivo, link):
+            if valor is not None:
+                hay_valor += 1
+
+        if hay_valor != 1:
+            msg = ("`sonido`, `archivo` o 'link' debe estar presente, pero no ninguno " +
+                    "o todos a la vez.")
+            await interaccion.response.send_message(content=msg,
                                                     ephemeral=True)
             return
 
@@ -100,6 +114,9 @@ class GrupoAudio(_GrupoABC):
         
         elif archivo is not None:
             await self._reproducir_archivo_sonido(interaccion, archivo)
+
+        elif link is not None:
+            await self._reproducir_link_musica(interaccion, link)
 
 
     async def _reproducir_sonido_cargado(self,
@@ -132,6 +149,34 @@ class GrupoAudio(_GrupoABC):
         interaccion.guild.voice_client.play(obj_sonido)
 
         await interaccion.response.send_message(content="Reproduciendo sonido...",
+                                                ephemeral=True)
+
+
+    async def _reproducir_link_musica(self,
+                                      interaccion: Interaction,
+                                      url: str) -> None:
+        """
+        Reproduce música desde una URL con el contenido.
+        """
+
+        try:
+            req = req_get(url)
+        except (InvalidURL, InvalidSchema, MissingSchema, ConnectionError):
+            await interaccion.response.send_message("**[ERROR]** URL inválida.",
+                                                    ephemeral=True)
+            return
+
+        if not req.status_code == codes.ok:
+            msg = "**[ERROR]** Operación inválida."
+        
+        elif "audio" not in req.headers["content-type"]:
+            msg = "**[ERROR]** La URL no es de un audio."
+        else:
+            msg = f"Reproduciendo desde link `{url}`..."
+            obj_sonido = FFmpegPCMAudio(BytesIO(req.content), pipe=True)
+            interaccion.guild.voice_client.play(obj_sonido)
+
+        await interaccion.response.send_message(content=msg,
                                                 ephemeral=True)
 
 

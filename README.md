@@ -37,9 +37,13 @@ almacenarlas en un directorio designado acorde.
 
 * **[Dependencias](requirements.txt)**
 
+    - [discord.py](https://pypi.org/project/discord.py/) *(con soporte de voz)*
+
     - [python-dotenv](https://pypi.org/project/python-dotenv/)
 
-    - [discord.py](https://pypi.org/project/discord.py/)
+    - [tinytag](https://pypi.org/project/tinytag/)
+
+    - [rqeuests](https://pypi.org/project/requests/)
 
 * **[Licencia MIT](LICENSE)**
 
