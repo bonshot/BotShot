@@ -4,7 +4,6 @@
 
 ### Cosas Custom Re Facheras ###
 *.env
-sounds
 *.log
 images
 src/__pycache__

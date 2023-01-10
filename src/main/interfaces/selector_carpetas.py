@@ -10,8 +10,8 @@ from discord import SelectOption
 from discord.enums import ButtonStyle
 from discord.ui import Button, Select, View, button
 
-from ..archivos import lista_carpetas, partir_ruta, unir_ruta
-from ..constantes import IMAGES_PATH
+from ..archivos import lista_nombre_carpetas, partir_ruta, unir_ruta
+from ..db.atajos import get_imagenes_path
 
 
 class MenuCarpetas(Select):
@@ -54,7 +54,7 @@ class MenuCarpetas(Select):
         """
         eleccion = self.values[0]
         self.path = unir_ruta(self.path, eleccion)
-        carpetas_actuales = lista_carpetas(self.path)
+        carpetas_actuales = lista_nombre_carpetas(self.path)
 
         if await self.seguir(carpetas_actuales, interaction):
             return
@@ -86,7 +86,7 @@ class MenuCarpetas(Select):
                 imagen = mensaje.attachments[0]
                 await imagen.save(unir_ruta(self.path, imagen.filename))
                 await interaction.response.edit_message(content=f'Guardado en `{self.path}`, ' +
-                                                                'Goshujin-Sama <:ouiea:862131679073927229>',
+                                                                'Goshujin-Sama \U0001F44D',
                                                         view=None)
 
 
@@ -96,7 +96,7 @@ class SelectorCarpeta(View):
     """
 
     def __init__(self,
-                 ruta: str=IMAGES_PATH,
+                 ruta: str=get_imagenes_path(),
                  pagina: int=0,
                  timeout: Optional[float]=120.0) -> None:
         """
@@ -128,7 +128,7 @@ class SelectorCarpeta(View):
         """
         Calcula las carpetas que hay en la ruta actual.
         """
-        return lista_carpetas(self.ruta)
+        return lista_nombre_carpetas(self.ruta)
 
 
     @property
@@ -207,7 +207,7 @@ class SelectorCarpeta(View):
         Oculta el botón dependiendo de la página actual.
         """
 
-        boton.disabled = any(((boton.custom_id == "go_back" and self.ruta == IMAGES_PATH),
+        boton.disabled = any(((boton.custom_id == "go_back" and self.ruta == get_imagenes_path()),
                             (boton.custom_id == "pg_back" and self.pagina <= 0),
                             (boton.custom_id == "pg_next" and self.pagina >= (self.max_paginas - 1))
                              ))

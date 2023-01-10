@@ -28,7 +28,7 @@ class ConfirmacionDestruir(View):
     @button(label="Que siiiiiiiii",
             style=ButtonStyle.red,
             custom_id="destroy",
-            emoji=Emoji.from_str("<:peperage:851967647679250493>"))
+            emoji=Emoji.from_str("\U0001F4A2"))
     async def confirmar_destruir(self, interaction: Interaction, _boton: Button) -> None:
         """
         Confirma que se quiere destruir un directorio.
@@ -42,7 +42,7 @@ class ConfirmacionDestruir(View):
     @button(label="Mejor no...",
             style=ButtonStyle.grey,
             custom_id="cancel_del",
-            emoji=Emoji.from_str("<:worrytowel:846950118385254442>"))
+            emoji=Emoji.from_str("\U0001F630"))
     async def cancelar_guardar(self, interaction: Interaction, _boton: Button) -> None:
         """
         Cancela la destrucción.

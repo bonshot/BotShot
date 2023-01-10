@@ -5,15 +5,16 @@ Módulo dedicado a contener la lógica de una clase que sobrecarga a
 
 from asyncio import set_event_loop_policy
 from platform import system
-from typing import TYPE_CHECKING, Any, Callable, Dict
+from typing import TYPE_CHECKING, Callable
 
 from discord import Intents, Message
 from discord.ext.commands import Bot
 from discord.utils import utcnow
 
-from ..archivos import get_nombre_archivos
+from ..archivos import buscar_archivos
 from ..auxiliares import get_prefijo
-from ..constantes import BOT_ID, COGS_PATH
+from ..db.atajos import (actualizar_guild, existe_usuario_autorizado,
+                         get_botshot_id, get_cogs_path)
 from ..logger import BotLogger
 
 if TYPE_CHECKING:
@@ -57,11 +58,11 @@ class BotShot(Bot):
         """
         super().__init__(cmd_prefix,
                          intents=BotShot.intents_botshot(),
-                         application_id=BOT_ID,
+                         application_id=get_botshot_id(),
                          options=opciones)
 
+        self.log: BotLogger = BotLogger()
         self.despierto_desde: "datetime" = utcnow()
-        self.partidas_truco: Dict[str, Any] = {}
 
 
     async def setup_hook(self) -> None:
@@ -69,25 +70,37 @@ class BotShot(Bot):
         Reliza acciones iniciales que el bot necesita.
         """
 
+        await self.cargar_cogs()
+
+
+    async def cargar_cogs(self) -> None:
+        """
+        Busca y carga recursivamente todos los cogs
+        del bot.
+        """
+
         ext = "py"
 
-        for cog_name in get_nombre_archivos(COGS_PATH, ext=ext):
-            if cog_name == "__init__.py":
-                continue
+        for ruta_cog in buscar_archivos(patron=f"*.{ext}",
+                                        nombre_ruta=get_cogs_path(),
+                                        ignorar_patrones=("__init__.*", "*_abc.*")):
 
-            await self.load_extension(f".{cog_name.removesuffix(f'.{ext}')}",
-                                      package="src.main.cogs")
+            self.log.info(f"[COG] Cargando cog {ruta_cog!r}")
+            await self.load_extension(ruta_cog.removesuffix(f".{ext}").replace("/", "."))
 
+        self.log.info("Sincronizando arbol de comandos...")
         await self.tree.sync()
 
 
-    @property
-    def log(self) -> BotLogger:
+    def actualizar_db(self) -> None:
         """
-        Devuelve el logger asignado a botshot.
+        Hace todos los procedimientos necesarios para actualizar
+        la base de datos de ser necesario.
         """
 
-        return BotLogger()
+        self.log.info("[DB] Actualizando guilds...")
+        for guild in self.guilds:
+            actualizar_guild(guild.id, guild.name)
 
 
     @property
@@ -97,3 +110,13 @@ class BotShot(Bot):
         """
 
         return utcnow() - self.despierto_desde
+
+
+    def es_admin(self, user_id: int) -> bool:
+        """
+        Verifica si el id de un usuario pertenece al
+        de uno autorizado a usar BotShot.
+        """
+
+        return (user_id == self.owner_id
+                or existe_usuario_autorizado(user_id))

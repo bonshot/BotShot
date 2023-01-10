@@ -4,26 +4,13 @@ Módulo que contiene la función creadora del registrador.
 
 from logging import INFO, FileHandler, Formatter, Logger, StreamHandler
 
-from ..constantes import LOG_PATH
+from ..db.atajos import get_log_path
 
 
 class BotLogger:
     """
     Registrador para el bot.
     """
-
-    def __new__(cls) -> "BotLogger":
-        """
-        Devuelva la instancia de la clase, que
-        debe ser única en todo momento.
-        """
-
-        if not hasattr(cls, "_instancia"):
-
-            cls._instancia = super(BotLogger, cls).__new__(cls)
-
-        return cls._instancia
-
 
     def __init__(self,
                  *,
@@ -42,7 +29,7 @@ class BotLogger:
 
         self._formateador: Formatter = Formatter(fmt=self.formato, datefmt=self.formato_fecha)
 
-        self.handler_archivos: FileHandler = FileHandler(filename=LOG_PATH, encoding='utf-8')
+        self.handler_archivos: FileHandler = FileHandler(filename=get_log_path(), encoding='utf-8')
         self.handler_consola: StreamHandler = StreamHandler()
         self.actualizar_formateador()
 

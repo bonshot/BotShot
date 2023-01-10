@@ -4,8 +4,7 @@ Tests de BotShot
 
 import unittest
 
-from .carta import *
-from .mazo import *
+from .juegos import *
 
 if __name__ == "__main__":
 
