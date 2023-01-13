@@ -113,7 +113,8 @@ def _condiciones_where(**condiciones: DictConds) -> str:
     try:
         extra = condiciones.pop("where")
         if not isinstance(extra, tuple):
-            raise TypeError("condiciones extra del parametro 'where' deben ser una tupla de strings.")
+            raise TypeError("condiciones extra del parametro 'where' " +
+                            "deben ser una tupla de strings.")
     except KeyError:
         extra = tuple()
 
@@ -132,6 +133,19 @@ def _protocolo_resolucion(resolucion: Optional[ValoresResolucion]=None) -> str:
         res_protocol = f" OR {resolucion} "
 
     return res_protocol
+
+
+def nombres_tablas(db_path: PathLike=DEFAULT_DB) -> tuple[str, ...]:
+    """
+    Devuelve una tupla con todos los nombres de las tablas que tiene la DB.
+    """
+
+    with connect(db_path) as con:
+        cur = con.cursor()
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        res = cur.fetchall()
+
+    return tuple(t[0] for t in res)
 
 
 def sacar_datos_de_tabla(tabla: str,

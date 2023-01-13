@@ -7,15 +7,15 @@ from os import execl
 from sys import executable as sys_executable
 from typing import TYPE_CHECKING, Optional
 
-from discord import File, Interaction
-from discord.app_commands import AppCommandError, autocomplete
+from discord import File, Interaction, Member
+from discord.app_commands import autocomplete
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
-from discord.app_commands.errors import CheckFailure
+from discord.app_commands.errors import AppCommandError, CheckFailure
 from discord.ext.commands import Context
 
-from ...auxiliares import (autocompletado_miembros_guild,
-                           autocompletado_usuarios_autorizados)
+from ...auxiliares import autocompletado_usuarios_autorizados
+from ...checks import es_usuario_autorizado
 from ...db.atajos import (actualizar_prefijo, borrar_usuario_autorizado,
                           existe_usuario_autorizado, get_log_path,
                           get_prefijo_guild, registrar_usuario_autorizado)
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 class GrupoAutorizar(_GrupoABC):
     """
-    Grupo para comandos de administradores.
+    Grupo para comandos de autorizacion.
     """
 
     def __init__(self, bot: "BotShot") -> None:
@@ -67,19 +67,15 @@ class GrupoAutorizar(_GrupoABC):
     @appcommand(name="autorizar",
                 description="[ADMIN] Autoriza a un usuario.")
     @describe(usuario="El usuario a autorizar.")
-    @autocomplete(usuario=autocompletado_miembros_guild)
     async def agregar_autorizacion(self,
                                    interaccion: Interaction,
-                                   usuario: Optional[str]=None) -> None:
+                                   usuario: Optional[Member]=None) -> None:
         """
         Registra un usuario autorizado.
         """
 
         if usuario is None:
             usuario = interaccion.user
-
-        else:
-            usuario = interaccion.guild.get_member(int(usuario))        
 
         if registrar_usuario_autorizado(usuario.name, int(usuario.discriminator), usuario.id):
             mensaje = f"Entendido, {usuario.mention}! Ahí te agrego."
@@ -258,6 +254,7 @@ class CogAdmin(_CogABC):
     @appcommand(name='prefix',
                 description='[ADMIN] Cambia el prefijo de los comandos.')
     @describe(nuevo_prefijo="El nuevo prefijo a usar en este servidor.")
+    @es_usuario_autorizado()
     async def cambiar_prefijo(self, interaccion: Interaction, nuevo_prefijo: str) -> None:
         """
         Cambia el prefijo utilizado para convocar a los comandos de texto,
@@ -297,6 +294,7 @@ class CogAdmin(_CogABC):
 
     @appcommand(name="reboot",
                 description="[ADMIN] Reinicia el bot.")
+    @es_usuario_autorizado()
     async def reboot(self, interaccion: Interaction) -> None:
         """
         Reinicia el bot, apagándolo y volviéndolo a conectar.
@@ -323,6 +321,7 @@ class CogAdmin(_CogABC):
 
     @appcommand(name='shutdown',
                 description='[ADMIN] Apaga el Bot.')
+    @es_usuario_autorizado()
     async def apagar_bot(self, interaccion: Interaction) -> None:
         """
         Cierra el Bot de manera correcta.

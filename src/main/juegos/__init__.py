@@ -2,5 +2,12 @@
 Paquete para implementaciones de juegos.
 """
 
-from .carta import *
-from .mazo import *
+from .jugador import *
+# estos imports deberían ser explícitos, así que quedan comentados
+# # ------------------------- #
+# from .manejadores import *
+# from .modelos import *
+# from .opciones import *
+# from .utils import *
+# from .vistas import *
+# # ------------------------- #

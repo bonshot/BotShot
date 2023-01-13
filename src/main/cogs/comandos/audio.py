@@ -5,7 +5,8 @@ Cog para comandos que trabajan con audio.
 from io import BytesIO
 from typing import TYPE_CHECKING, Optional
 
-from discord import Attachment, ChannelType, FFmpegPCMAudio, Interaction
+from discord import (Attachment, ChannelType, FFmpegPCMAudio, Interaction,
+                     Member, VoiceChannel)
 from discord.app_commands import AppCommandError, autocomplete
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
@@ -18,8 +19,6 @@ from tinytag import TinyTag
 
 from ...archivos import borrar_archivo, existe, repite_nombre
 from ...auxiliares import (autocompletado_archivos_audio,
-                           autocompletado_canales_voz,
-                           autocompletado_miembros_guild,
                            autocompletado_sonidos_usuario)
 from ...checks import es_usuario_autorizado
 from ...db.atajos import get_sonidos_path
@@ -31,7 +30,6 @@ if TYPE_CHECKING:
     from os import PathLike
 
     from discord import Member
-    from discord.abc import GuildChannel
 
     from ...botshot import BotShot
 
@@ -246,11 +244,10 @@ class GrupoSonido(_GrupoABC):
                 description="Registra un nuevo sonido para un usuario.")
     @describe(audio="El sonido a procesar.",
               usuario="El usuario al que asignarle el nuevo audio.")
-    @autocomplete(usuario=autocompletado_miembros_guild)
     async def agregar_sonido(self,
                              interaccion: Interaction,
                              audio: Attachment,
-                             usuario: Optional[str]=None) -> None:
+                             usuario: Optional[Member]=None) -> None:
         """
         Agrega un sonido asignado a un usuario.
         """
@@ -272,9 +269,7 @@ class GrupoSonido(_GrupoABC):
             return
 
         if usuario is None:
-            usuario: "Member" = autor
-        else:
-            usuario: "Member" = interaccion.guild.get_member(int(usuario))
+            usuario = autor
 
         audio_fn = audio.filename
         ruta_temp = repite_nombre(f"{get_sonidos_path()}/bienvenida/{usuario.id}/{audio_fn}")
@@ -359,17 +354,16 @@ class CogAudio(_CogABC):
     @appcommand(name="conectar",
                 description="Conecta a un canal de voz.")
     @describe(canal="El canal al que conectarse.")
-    @autocomplete(canal=autocompletado_canales_voz)
     @es_usuario_autorizado()
-    async def conectar_channel(self, interaccion: Interaction, canal: Optional[str]=None) -> None:
+    async def conectar_channel(self,
+                               interaccion: Interaction,
+                               canal: Optional[VoiceChannel]=None) -> None:
         """
         Conecta a un canal de voz.
         """
 
         if canal is None:
-            canal: "GuildChannel" = interaccion.channel
-        else:
-            canal: "GuildChannel" = interaccion.guild.get_channel(int(canal))
+            canal = interaccion.channel
 
         if canal.type != ChannelType.voice:
             await interaccion.response.send_message(content="Este no es un canal de voz.",

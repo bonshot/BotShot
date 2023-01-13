@@ -9,7 +9,7 @@ from discord import PartialEmoji as Emoji
 from discord.enums import ButtonStyle
 from discord.ui import Button, View, button
 
-from ..db.atajos import get_imagenes_path
+from ...db.atajos import get_imagenes_path
 from .selector_carpetas import SelectorCarpeta
 
 

@@ -3,6 +3,7 @@ Módulo para seleccionar una carpeta.
 """
 
 from typing import Optional
+from os import PathLike
 
 from discord import Interaction
 from discord import PartialEmoji as Emoji
@@ -10,8 +11,8 @@ from discord import SelectOption
 from discord.enums import ButtonStyle
 from discord.ui import Button, Select, View, button
 
-from ..archivos import lista_nombre_carpetas, partir_ruta, unir_ruta
-from ..db.atajos import get_imagenes_path
+from ...archivos import lista_nombre_carpetas, partir_ruta, unir_ruta
+from ...db.atajos import get_imagenes_path
 
 
 class MenuCarpetas(Select):
@@ -124,7 +125,7 @@ class SelectorCarpeta(View):
 
 
     @property
-    def carpetas(self) -> MenuCarpetas:
+    def carpetas(self) -> list[PathLike]:
         """
         Calcula las carpetas que hay en la ruta actual.
         """

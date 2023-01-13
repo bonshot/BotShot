@@ -2,15 +2,15 @@
 Cog que agrupa comandos para los canales.
 """
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, TypeAlias, Union
 
-from discord import Interaction
+from discord import (ForumChannel, Interaction, StageChannel, TextChannel,
+                     VoiceChannel)
 from discord.app_commands import autocomplete
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
 
-from ...auxiliares import (autocompletado_canales_escuchados,
-                           autocompletado_todos_canales)
+from ...auxiliares import autocompletado_canales_escuchados
 from ...checks import es_usuario_autorizado
 from ...db.atajos import (actualizar_canal_escuchado, borrar_canal_escuchado,
                           get_canales_escuchados)
@@ -19,6 +19,9 @@ from ..cog_abc import GroupsList, _CogABC, _GrupoABC
 if TYPE_CHECKING:
 
     from ...botshot import BotShot
+
+
+Channel: TypeAlias = Union[ForumChannel, StageChannel, TextChannel, VoiceChannel]
 
 
 class GrupoCanal(_GrupoABC):
@@ -60,9 +63,10 @@ class GrupoCanal(_GrupoABC):
     @appcommand(name='agregar',
                 description='Agregar canal al que el bot escucha.')
     @describe(canal='El canal a agregar de este guild a agregar.')
-    @autocomplete(canal=autocompletado_todos_canales)
     @es_usuario_autorizado()
-    async def agregar_channel(self, interaccion: Interaction, canal: Optional[str]=None) -> None:
+    async def agregar_channel(self,
+                              interaccion: Interaction,
+                              canal: Optional[Channel]=None) -> None:
         """
         Agrega un nuevo canal para que escuche el bot.
         """

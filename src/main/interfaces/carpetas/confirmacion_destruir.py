@@ -9,7 +9,7 @@ from discord import PartialEmoji as Emoji
 from discord.enums import ButtonStyle
 from discord.ui import Button, View, button
 
-from ..archivos import borrar_dir, partir_ruta
+from ...archivos import borrar_dir, partir_ruta
 
 
 class ConfirmacionDestruir(View):

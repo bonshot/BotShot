@@ -1,5 +1,5 @@
 """
-Módulo para explorar y borrar una carpeta.
+Módulo para explorar y crear una carpeta.
 """
 
 from typing import Optional
@@ -8,13 +8,12 @@ from discord import ButtonStyle, Interaction
 from discord import PartialEmoji as Emoji
 from discord.ui import Button, button
 
-from ..archivos import lista_nombre_carpetas, partir_ruta, unir_ruta
-from ..db.atajos import get_imagenes_path
-from .confirmacion_destruir import ConfirmacionDestruir
+from ...archivos import crear_dir, lista_nombre_carpetas, partir_ruta, unir_ruta
+from ...db.atajos import get_imagenes_path
 from .selector_carpetas import MenuCarpetas, SelectorCarpeta
 
 
-class MenuDestructorCarpetas(MenuCarpetas):
+class MenuCreadorCarpetas(MenuCarpetas):
     """
     Clase de menú para crear carpetas.
     """
@@ -22,9 +21,10 @@ class MenuDestructorCarpetas(MenuCarpetas):
     def __init__(
         self,
         *,
+        nombre_carpeta: str,
         ruta: str,
         lista_rutas: list[str],
-        custom_id: str="menu_destructor_carpetas",
+        custom_id: str="menu_creador_carpetas",
         placeholder: Optional[str]="Seleccione una Carpeta",
         min_values: int=1,
         max_values: int=1,
@@ -32,8 +32,10 @@ class MenuDestructorCarpetas(MenuCarpetas):
         row: Optional[int]=1
     ) -> None:
         """
-        Inicializa una instancia de 'MenuDestructorCarpetas'.
+        Inicializa una instancia de 'MenuCreadorCarpetas'.
         """
+
+        self.nombre = nombre_carpeta
 
         super().__init__(ruta=ruta,
                          lista_rutas=lista_rutas,
@@ -63,15 +65,29 @@ class MenuDestructorCarpetas(MenuCarpetas):
         Cambia la vista por otra, y sigue navegando.
         """
 
-        await interaction.response.edit_message(content=f"Actualmente en `{self.path}`",
-                                                view=DestructorCarpetas(self.path))
+        await interaction.response.edit_message(content="Creando como " +
+                                                        f"`{unir_ruta(self.path, self.nombre)}`",
+                                                view=CreadorCarpetas(self.nombre, self.path))
         return True
 
 
-class DestructorCarpetas(SelectorCarpeta):
+class CreadorCarpetas(SelectorCarpeta):
     """
     Clase para crear carpetas y/o directorios.
     """
+
+    def __init__(self,
+                 nombre_carpeta: str,
+                 ruta: str=get_imagenes_path(),
+                 pagina: int=0,
+                 timeout: Optional[float]=120.0) -> None:
+        """
+        Inicializa una instancia de 'CreadorCarpeta'.
+        """
+
+        self.nombre: str = nombre_carpeta
+        super().__init__(ruta, pagina, timeout)
+
 
     @property
     def mensaje_refrescar(self) -> str:
@@ -79,10 +95,10 @@ class DestructorCarpetas(SelectorCarpeta):
         El string que se muestra al refrescar el mensaje.
         """
 
-        return f"Actualmente en `{self.ruta}`"
+        return f"Creando como `{unir_ruta(self.ruta, self.nombre)}`"
 
 
-    def generar_menu(self) -> MenuDestructorCarpetas:
+    def generar_menu(self) -> MenuCreadorCarpetas:
         """
         Genera un nuevo menú de carpetas.
         """
@@ -98,29 +114,30 @@ class DestructorCarpetas(SelectorCarpeta):
             ls_rutas = [partir_ruta(self.ruta)[1]]
             placeholder = "No hay carpetas..."
 
-        return MenuDestructorCarpetas(ruta=self.ruta,
-                                      lista_rutas=ls_rutas,
-                                      placeholder=placeholder)
+        return MenuCreadorCarpetas(nombre_carpeta=self.nombre,
+                                   ruta=self.ruta,
+                                   lista_rutas=ls_rutas,
+                                   placeholder=placeholder)
 
 
-    @button(label="Borrar Directorio",
-            style=ButtonStyle.red,
-            custom_id="del_dir",
+    @button(label="Crear",
+            style=ButtonStyle.grey,
+            custom_id="new_dir",
             row=2,
-            emoji=Emoji.from_str("\U0000274C"))
-    async def borrar_carpeta(self, interaccion: Interaction, _boton: Button) -> None:
+            emoji=Emoji.from_str("\U00002705"))
+    async def crear_carpeta(self, interaccion: Interaction, _boton: Button) -> None:
         """
-        Pregunta si se desea borrar la carpeta deseada.
+        Crea definitivamente la carpeta deseada.
         """
 
-        ruta_raiz = get_imagenes_path()
-
-        if self.ruta == ruta_raiz:
-            msg = "\n\n*...estas...*\n*...estás tratando de borrar la carpeta raíz!?*"
+        if self.nombre in self.carpetas:
+            msg = (interaccion.message.content + "\n\nMe da que no, capo. " +
+                   f"El nombre `{self.nombre}` está repetido y ya está creado.")
             await interaccion.response.edit_message(content=msg,
                                                     view=self)
             return
 
-        await interaccion.response.edit_message(content="¿Estás ***seguro*** de que querés borrar " +
-                                                        f"`{partir_ruta(self.ruta)[1]}`?",
-                                                view=ConfirmacionDestruir(ruta=self.ruta))
+        ruta_definitiva = unir_ruta(self.ruta, self.nombre)
+        crear_dir(ruta_definitiva)
+        await interaccion.response.edit_message(content=f"Directorio `{ruta_definitiva}` creado, pa.",
+                                                view=None)

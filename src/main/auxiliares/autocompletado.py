@@ -8,6 +8,7 @@ from discord import ChannelType, Interaction
 from discord.app_commands import Choice
 
 from ..archivos import buscar_archivos, partir_ruta
+from ..db import nombres_tablas
 from ..db.atajos import (get_canales_escuchados, get_recomendaciones_carpetas,
                          get_sonidos_path, get_usuarios_autorizados)
 
@@ -152,3 +153,15 @@ async def autocompletado_sonidos_usuario(interaccion: Interaction,
     return await autocompletado_ruta(interaccion=interaccion,
                                      current=current,
                                      ruta_actual=f"{get_sonidos_path()}/bienvenida/{usuario_id}")
+
+
+async def autocompletado_nombres_tablas_db(_interaccion: Interaction,
+                                           current: str) -> list[Choice[str]]:
+    """
+    Devuelve los nombres de todas las tablas disponibles en la DB.
+    """
+
+    return [
+        Choice(name=tabla, value=tabla) for tabla in nombres_tablas()
+        if current.lower() in tabla.lower()
+    ][:25]
