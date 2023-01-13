@@ -4,7 +4,7 @@ Módulo para tests de la clase Enum 'Palo'.
 
 from unittest import TestCase
 
-from src.main.juegos.carta.palo_carta import *
+from src.main.juegos.utils.carta.palo_carta import *
 
 
 class TestPalo(TestCase):

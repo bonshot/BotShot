@@ -4,7 +4,7 @@ Módulo para tests de la clase 'Carta'.
 
 from unittest import TestCase
 
-from src.main.juegos.carta.naipe_espaniol import *
+from src.main.juegos.utils.carta.naipe_espaniol import *
 
 
 class TestCarta(TestCase):

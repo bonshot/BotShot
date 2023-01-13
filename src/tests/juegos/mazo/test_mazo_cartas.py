@@ -4,7 +4,7 @@ Módulo para tests de la clase 'Mazo'.
 
 from unittest import TestCase
 
-from src.main.juegos.mazo.mazo_cartas import *
+from src.main.juegos.utils.mazo.mazo_cartas import *
 
 
 class TestMazo(TestCase):
