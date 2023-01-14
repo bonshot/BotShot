@@ -2,7 +2,7 @@
 Vista genérica de un juego.
 """
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from discord.ui import View
 

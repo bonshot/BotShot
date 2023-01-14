@@ -2,13 +2,84 @@
 Módulo para una vista de una partida de Tres en Raya.
 """
 
-from typing import Optional
+from typing import Any, Optional, TYPE_CHECKING
 
 from discord import ButtonStyle, Interaction
 from discord import PartialEmoji as Emoji
 from discord.ui import Button, button
 
 from ..vista_juego_abc import VistaJuegoBase
+
+if TYPE_CHECKING:
+    from ...modelos import TaTeTi
+
+
+async def _cerrar_partida(interaccion: Interaction) -> None:
+    """
+    Función auxiliar para cerrar una partida.
+    """
+
+    await interaccion.message.delete()
+    await interaccion.response.send_message(content="*Terminando partida...*",
+                                            delete_after=5.0)
+
+
+class SiReiniciar(Button):
+    """
+    Botón para reiniciar el Tres en Raya.
+    """
+
+    def __init__(self, modelo: "TaTeTi"):
+        """
+        Inicializa una instancia de 'SiReiniciar'.        
+        """
+
+        super().__init__(style=ButtonStyle.green,
+                         label="Sí",
+                         disabled=False,
+                         custom_id="restart_yes",
+                         emoji=Emoji.from_str("\U00002705"),
+                         row=0)
+
+        self.modelo: "TaTeTi" = modelo
+
+
+    async def callback(self, interaccion: Interaction) -> Any:
+        """
+        Se reinicia la partida.
+        """
+
+        self.modelo.reiniciar()
+        await interaccion.response.edit_message(content=self.modelo.mensaje,
+                                                view=VistaTaTeTi(self.modelo))
+
+
+class NoReiniciar(Button):
+    """
+    Botón para cerrar el Tres en Raya.
+    """
+
+    def __init__(self, modelo: "TaTeTi"):
+        """
+        Inicializa una instancia de 'NoReiniciar'.        
+        """
+
+        super().__init__(style=ButtonStyle.red,
+                         label="No",
+                         disabled=False,
+                         custom_id="restart_no",
+                         emoji=Emoji.from_str("\U0000274E"),
+                         row=0)
+
+        self.modelo: "TaTeTi" = modelo
+
+
+    async def callback(self, interaccion: Interaction) -> Any:
+        """
+        Se reinicia la partida.
+        """
+
+        await _cerrar_partida(interaccion)
 
 
 class VistaTaTeTi(VistaJuegoBase):
@@ -31,18 +102,23 @@ class VistaTaTeTi(VistaJuegoBase):
         Actualiza el mensaje de la partida.
         """
 
-        if self.modelo.terminado():
-            msg = ((f"Victoria para **{self.modelo.jugador_actual.nombre} " +
-                   f"({self.modelo.ficha_actual})**")
-                   if not self.modelo.empate()
-                   else "Es un empate.")
-            await interaccion.response.edit_message(content=msg,
-                                                    view=None)
-            await interaccion.message.delete(delay=5.0)
+        if not self.modelo.terminado():
+            await interaccion.response.edit_message(content=mensaje,
+                                                    view=self)
             return
 
-        await interaccion.response.edit_message(content=mensaje,
+        msg = ((f"Victoria para **{self.modelo.jugador_actual.nombre} " +
+                f"({self.modelo.ficha_actual})**")
+                if not self.modelo.empate()
+                else "Es un empate.")
+
+        self.clear_items()
+        self.add_item(SiReiniciar(self.modelo))
+        self.add_item(NoReiniciar(self.modelo))
+        await interaccion.response.edit_message(content=msg + "\n\n¿Otra partida?",
                                                 view=self)
+
+        
 
 
     async def seguir(self,
@@ -201,3 +277,16 @@ class VistaTaTeTi(VistaJuegoBase):
                           fil=2,
                           interaccion=interaccion,
                           boton=boton)
+
+
+    @button(label="Cerrar",
+            custom_id="tictactoe_close",
+            style=ButtonStyle.gray,
+            emoji=Emoji.from_str("\U0001F6D1"),
+            row=4)
+    async def cerrar_tateti(self, interaccion: Interaction, _boton: Button) -> None:
+        """
+        Cierra la partida.
+        """
+
+        await _cerrar_partida(interaccion)

@@ -66,8 +66,6 @@ class MenuJuegos(Select):
         jugadores = [Jugador(nombre=autor.display_name,
                              id=str(autor.id))]
         manejador = self.juegos[eleccion](jugadores=jugadores,
-                                          min_jugadores=2,
-                                          max_jugadores=2,
                                          **interaccion.extras)
 
         await interaccion.response.edit_message(content=f"Creando partida de `{eleccion}`!",

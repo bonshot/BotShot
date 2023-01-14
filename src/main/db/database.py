@@ -10,6 +10,7 @@ DictConds: TypeAlias = Dict[str, Any]
 ValoresResolucion: TypeAlias = Literal["ABORT", "FAIL", "IGNORE", "REPLACE", "ROLLBACK"]
 _SingularResult: TypeAlias = Tuple[Union[None, int, str]]
 FetchResult: TypeAlias = Union[List[_SingularResult], _SingularResult]
+CursorDesc: TypeAlias = Dict[str, Union[None, Tuple[str, ...], str, int]]
 
 DEFAULT_DB: PathLike = "src/main/db/db.sqlite3"
 RESOLUCIONES: Tuple[str, ...] = "ABORT", "FAIL", "IGNORE", "REPLACE", "IGNORE"
@@ -74,11 +75,13 @@ def crear_nueva_db(db_path: PathLike[str]="") -> None:
         """)
 
 
-def ejecutar_comando(comando: str, es_script: bool, db_path: PathLike[str]="") -> None:
+def ejecutar_comando(comando: str, es_script: bool, db_path: PathLike[str]) -> CursorDesc:
     """
     Ejecuta un comando arbitrario, pasándolo tal cual a
     sqlite para parsear.
     """
+
+    data = {}
 
     with connect(db_path) as con:
         cur = con.cursor()
@@ -88,21 +91,28 @@ def ejecutar_comando(comando: str, es_script: bool, db_path: PathLike[str]="") -
         else:
             cur.execute(comando)
 
+        # Juntando datos
+        data["description"] = tuple(d[0] for d in cur.description) if cur.description is not None else None
+        data["lastrowid"] = cur.lastrowid
+        data["rowcount"] = cur.rowcount
 
-def ejecutar_linea(comando: str, db_path: PathLike[str]="") -> None:
+    return data
+
+
+def ejecutar_linea(comando: str, db_path: PathLike[str]="") -> CursorDesc:
     """
     Ejecuta un comando de SQL que no requiera sacar datos.
     """
 
-    ejecutar_comando(comando, False, db_path or DEFAULT_DB)
+    return ejecutar_comando(comando, False, db_path or DEFAULT_DB)
 
 
-def ejecutar_script(comando: str, db_path: PathLike[str]="") -> None:
+def ejecutar_script(comando: str, db_path: PathLike[str]="") -> CursorDesc:
     """
     Ejecuta un comando de SQL de varias líneas.
     """
 
-    ejecutar_comando(comando, True, db_path or DEFAULT_DB)
+    return ejecutar_comando(comando, True, db_path or DEFAULT_DB)
 
 
 def _condiciones_where(**condiciones: DictConds) -> str:
@@ -165,34 +175,46 @@ def sacar_datos_de_tabla(tabla: str,
 
 
 def borrar_datos_de_tabla(tabla: str,
-                          **condiciones: DictConds) -> None:
+                          **condiciones: DictConds) -> int:
     """
     Borra datos de una base de datos.
+    Devuelve la cantidad de filas afectadas.
 
     * NO oncluye una opción LIMIT.
     """
 
     conds = _condiciones_where(**condiciones)
+    cuenta = 0
 
     with connect(DEFAULT_DB) as con:
         cur = con.cursor()
         cur.execute(f"DELETE FROM {tabla}{conds};")
+        cuenta += cur.rowcount
+
+    return cuenta
 
 
 def insertar_datos_en_tabla(tabla: str,
                             resolucion: Optional[ValoresResolucion]=None,
                             *,
                             llave_primaria_por_defecto: bool=True,
-                            valores=Tuple[Any, ...]) -> None:
-    "Intenta insertar datos en una tabla."
+                            valores=Tuple[Any, ...]) -> int:
+    """
+    Intenta insertar datos en una tabla.
+    Devuelve la cantidad de filas afectadas.
+    """
 
     protocolo_res = _protocolo_resolucion(resolucion)
     valores_wrapped = [f"{v!r}" for v in valores]
     valores_finales = f"({'?, ' if llave_primaria_por_defecto else ''}{', '.join(valores_wrapped)})"
+    cuenta = 0
 
     with connect(DEFAULT_DB) as con:
         cur = con.cursor()
         cur.executescript(f"INSERT{protocolo_res} INTO {tabla} VALUES{valores_finales};")
+        cuenta += cur.rowcount
+
+    return cuenta
 
 
 def actualizar_dato_de_tabla(tabla: str,
@@ -200,18 +222,25 @@ def actualizar_dato_de_tabla(tabla: str,
                               *,
                               nombre_col: str,
                               valor: Any,
-                              **condiciones: DictConds) -> None:
-    "Actualiza un dato ya presente en tablas."
+                              **condiciones: DictConds) -> int:
+    """
+    Actualiza un dato ya presente en tablas.
+    Devuelve la cantidad de filas afectadas.
+    """
 
     if not isinstance(nombre_col, str):
         raise TypeError("El nombre de la columna debe ser de tipo string.")
 
     conds = _condiciones_where(**condiciones)
     res_protocol = _protocolo_resolucion(resolucion)
+    cuenta = 0
 
     with connect(DEFAULT_DB) as con:
         cur = con.cursor()
         cur.execute(f"UPDATE{res_protocol} {tabla} SET {nombre_col}={valor!r} {conds};")
+        cuenta += cur.rowcount
+
+    return cuenta
 
 
 def existe_dato_en_tabla(tabla: str,

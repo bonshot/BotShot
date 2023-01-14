@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Optional, TypeAlias
 
 if TYPE_CHECKING:
     from ..jugador import ListaJugadores
+    from ..opciones import OpcionesBase
 
 ListaJuegos: TypeAlias = list[type["JuegoBase"]]
 
@@ -19,7 +20,12 @@ class JuegoBase(ABC):
 
     _ignorar: bool = False
     nombre_muestra: Optional[str] = None
+    min_jugadores: int = 1
+    max_jugadores: int = 2
+
+
     lista_juegos: ListaJuegos = []
+
 
     def __init_subclass__(cls: type["JuegoBase"]) -> None:
         """
@@ -43,6 +49,7 @@ class JuegoBase(ABC):
 
     def __init__(self,
                  jugadores: "ListaJugadores",
+                 opciones: Optional["OpcionesBase"]=None,
                  **kwargs) -> None:
         """
         Inicializa la instancia de un juego.
@@ -50,6 +57,7 @@ class JuegoBase(ABC):
 
         self.id: str = token_hex(32)
         self.jugadores: "ListaJugadores" = jugadores
+        self.opciones: Optional["OpcionesBase"] = opciones
 
         self.mensaje: str = ""
 

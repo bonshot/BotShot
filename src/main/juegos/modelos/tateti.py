@@ -2,13 +2,15 @@
 Módulo para un juego de Tres en Raya.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 from ..jugador import ListaJugadores
 from .partida_abc import JuegoBase
 
 if TYPE_CHECKING:
     from ..jugador import Jugador
+
+Grilla: TypeAlias = list[list[str]]
 
 X: str = "\U0000274C"
 O: str = "\U00002B55"
@@ -20,6 +22,8 @@ class TaTeTi(JuegoBase):
     """
 
     nombre_muestra: str = "Tres en Raya"
+    min_jugadores: int = 2
+    max_jugadores: int = 2
 
 
     def __init__(self, jugadores: ListaJugadores, **kwargs) -> None:
@@ -35,7 +39,7 @@ class TaTeTi(JuegoBase):
         jugador_1, jugador_2 = self.jugadores
 
         self.dim: int = 3
-        self.grilla: list[list[str]] = [["" for _ in range(self.dim)] for _ in range(self.dim)]
+        self.grilla: Grilla = self._generar_grilla(self.dim)
         self.turno_actual: int = 0
         self.ficha_1: str = jugador_1.emoji or X
         self.ficha_2: str = jugador_2.emoji or O
@@ -50,6 +54,14 @@ class TaTeTi(JuegoBase):
         """
 
         return str(self.grilla)
+
+
+    def _generar_grilla(self, dim: int) -> Grilla:
+        """
+        Genera la grilla.
+        """
+
+        return [["" for _ in range(dim)] for _ in range(dim)]
 
 
     def _validar_coord(self, x: int, y: int) -> bool:
@@ -187,7 +199,7 @@ class TaTeTi(JuegoBase):
             self._actualizar_mensaje_turno()
             estado = True
         else:
-            self.mensaje += "\n\n*Movimiento Inválido.*"
+            self.mensaje = "*Movimiento Inválido.*"
             estado = False
 
         return estado
@@ -221,3 +233,18 @@ class TaTeTi(JuegoBase):
             diags == self.dim or
             rdiags == self.dim):
             self._terminado = True
+
+
+    def reiniciar(self) -> None:
+        """
+        Reinicia todos los parámetros del juego.
+        """
+
+        self.grilla: Grilla = self._generar_grilla(self.dim)
+        self.turno_actual: int = 0
+
+        self._terminado: bool = False
+        self._empate: bool = False
+
+        self.iniciar()
+        self.setup()

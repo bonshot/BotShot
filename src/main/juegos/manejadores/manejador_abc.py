@@ -43,8 +43,6 @@ class ManejadorBase(ABC):
     def __init__(self,
                  *,
                  jugadores: "ListaJugadores",
-                 min_jugadores: int=1,
-                 max_jugadores: int=2,
                  **kwargs) -> None:
         """
         Inicializa el manejador del juego.
@@ -54,8 +52,6 @@ class ManejadorBase(ABC):
         cls_vista_opciones = self.clase_vista_opciones()
 
         self.lista_jugadores: "ListaJugadores" = jugadores
-        self.min_jugadores: int = min_jugadores
-        self.max_jugadores: int = max_jugadores
 
         self._modelo_inst: Optional["JuegoBase"] = None
         self._vista_modelo_inst: Optional["VistaJuegoBase"] = None
@@ -67,6 +63,8 @@ class ManejadorBase(ABC):
                                                             if (cls_opciones is not None
                                                                 and cls_vista_opciones is not None)
                                                             else None)
+
+        self.extras: dict = kwargs
 
 
     @staticmethod
@@ -145,7 +143,7 @@ class ManejadorBase(ABC):
         cls_modelo = self.clase_modelo()
         cls_vista_modelo = self.clase_vista_modelo()
 
-        self._modelo_inst: "JuegoBase" = cls_modelo(self.lista_jugadores, **kwargs)
+        self._modelo_inst: "JuegoBase" = cls_modelo(self.lista_jugadores, self.opciones, **kwargs)
         self._modelo_inst.iniciar()
         self._vista_modelo_inst: "VistaJuegoBase" = cls_vista_modelo(self._modelo_inst)
 
@@ -166,6 +164,24 @@ class ManejadorBase(ABC):
         """
 
         return self._vista_opciones_inst
+
+
+    @property
+    def min_jugadores(self) -> int:
+        """
+        Devuelve la cantidad mínima de jugadores.
+        """
+
+        return self.clase_modelo().min_jugadores
+
+
+    @property
+    def max_jugadores(self) -> int:
+        """
+        Devuelve la cantidad máxima de jugadores.
+        """
+
+        return self.clase_modelo().max_jugadores
 
 
     def refrescar_embed(self) -> Embed:
