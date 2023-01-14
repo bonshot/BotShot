@@ -30,7 +30,7 @@ class CogIA(_CogABC):
         Convierte grados Celsius a Farenheit mediante inteligencia artificial.
         """
         if iteraciones < 1 or iteraciones > 887:
-            await interaccion.response.send_message("El número de iteraciones debe ser mayor a 0 y menor a 10000.")
+            await interaccion.response.send_message("El número de iteraciones debe ser mayor a 0 y menor a 888.")
             return
         tiempo_entrenamiento, fahrenheit = f.convertir_celsius_a_fahrenheit(celsius, iteraciones)
         await interaccion.response.send_message(
