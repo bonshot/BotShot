@@ -45,6 +45,8 @@ almacenarlas en un directorio designado acorde.
 
     - [requests](https://pypi.org/project/requests/)
 
+    - [Pillow](https://pypi.org/project/Pillow/)
+
 * **[Licencia MIT](LICENSE)**
 
 * **[Cómo contribuir y Convenciones usadas](CONTRIBUTING.MD)**
