@@ -26,7 +26,7 @@ class TestMazo(TestCase):
         self.assertEqual(len(mazo), 50)
 
         for i in range(1, 13):
-            self.assertEquals(stats[i], 4)
+            self.assertEqual(stats[i], 4)
 
         for palo in Palo:
             if palo == Palo.COMODIN:
