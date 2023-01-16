@@ -12,6 +12,7 @@ from ..vista_juego_abc import VistaJuegoBase
 
 if TYPE_CHECKING:
     from ...modelos import TaTeTi
+    from ...jugador import ListaJugadores
 
 
 async def _cerrar_partida(interaccion: Interaction) -> None:
@@ -29,7 +30,7 @@ class SiReiniciar(Button):
     Botón para reiniciar el Tres en Raya.
     """
 
-    def __init__(self, modelo: "TaTeTi"):
+    def __init__(self, vista: "VistaTaTeTi"):
         """
         Inicializa una instancia de 'SiReiniciar'.        
         """
@@ -41,7 +42,25 @@ class SiReiniciar(Button):
                          emoji=Emoji.from_str("\U00002705"),
                          row=0)
 
-        self.modelo: "TaTeTi" = modelo
+        self.vista: "VistaTaTeTi" = vista
+        self.jugadores_aceptaron: "ListaJugadores" = []
+
+
+    def _jugador_acepto(self, id_jugador: str) -> bool:
+        """
+        Determina por id si un jugador aceptó reiniciar la partida.
+        """
+
+        return any(id_jugador == jugador.id for jugador in self.jugadores_aceptaron)
+
+
+    @property
+    def aceptaciones(self) -> int:
+        """
+        Devuelve cuántos jugadores aceptaron reiniciar la partida.
+        """
+
+        return len(self.jugadores_aceptaron)
 
 
     async def callback(self, interaccion: Interaction) -> Any:
@@ -49,9 +68,31 @@ class SiReiniciar(Button):
         Se reinicia la partida.
         """
 
-        self.modelo.reiniciar()
-        await interaccion.response.edit_message(content=self.modelo.mensaje,
-                                                view=VistaTaTeTi(self.modelo))
+        autor = interaccion.user
+
+        if not self.vista.modelo.existe_jugador(id_jugador=str(autor.id)):
+            msg = f"{autor.mention}, vos no sos un jugador de esta partida."
+            await interaccion.response.edit_message(content=msg)
+            return
+
+
+        elif self._jugador_acepto(str(autor.id)):
+            msg = f"{autor.mention}, vos ya aceptaste reiniciar la partida."
+            await interaccion.response.edit_message(content=msg)
+            return
+
+        else:
+            jug = self.vista.modelo.get_jugador(str(autor.id))
+            self.jugadores_aceptaron.append(jug)
+            msg = (f"Reiniciando partida... **({self.aceptaciones} / " +
+                   f"{self.vista.modelo.cantidad_jugadores})**")
+            await interaccion.response.edit_message(content=msg)
+
+        if self.aceptaciones == self.vista.modelo.cantidad_jugadores:
+            self.vista.modelo.opciones.cambiar_orden_jugadores() # Necesariamente primero
+            self.vista.modelo.reiniciar()
+            await interaccion.message.edit(content=self.vista.modelo.mensaje,
+                                           view=VistaTaTeTi(self.vista.bot, self.vista.modelo))
 
 
 class NoReiniciar(Button):
@@ -59,7 +100,7 @@ class NoReiniciar(Button):
     Botón para cerrar el Tres en Raya.
     """
 
-    def __init__(self, modelo: "TaTeTi"):
+    def __init__(self, vista: "VistaTaTeTi"):
         """
         Inicializa una instancia de 'NoReiniciar'.        
         """
@@ -71,7 +112,7 @@ class NoReiniciar(Button):
                          emoji=Emoji.from_str("\U0000274E"),
                          row=0)
 
-        self.modelo: "TaTeTi" = modelo
+        self.vista: "VistaTaTeTi" = vista
 
 
     async def callback(self, interaccion: Interaction) -> Any:
@@ -113,9 +154,10 @@ class VistaTaTeTi(VistaJuegoBase):
                 else "Es un empate.")
 
         self.clear_items()
-        self.add_item(SiReiniciar(self.modelo))
-        self.add_item(NoReiniciar(self.modelo))
-        await interaccion.response.edit_message(content=msg + "\n\n¿Otra partida?",
+        self.add_item(SiReiniciar(self))
+        self.add_item(NoReiniciar(self))
+        jug = self.modelo.cantidad_jugadores
+        await interaccion.response.edit_message(content=msg + f"\n\n¿Otra partida? **(0 / {jug})**",
                                                 view=self)
 
         

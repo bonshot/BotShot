@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 from discord import Interaction
 from discord.app_commands import command as appcommand
 
-from ..cog_abc import _CogABC
 from ...interfaces import SelectorJuegos
+from ..cog_abc import _CogABC
 
 if TYPE_CHECKING:
 
@@ -31,7 +31,7 @@ class CogJuegos(_CogABC):
                                                 ephemeral=True)
 
         await interaccion.channel.send(content="Por favor elige un juego:",
-                                       view=SelectorJuegos())
+                                       view=SelectorJuegos(self.bot))
 
 
 async def setup(bot: "BotShot"):

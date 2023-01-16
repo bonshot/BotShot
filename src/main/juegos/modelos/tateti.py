@@ -2,13 +2,14 @@
 Módulo para un juego de Tres en Raya.
 """
 
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING, Optional, TypeAlias
 
 from ..jugador import ListaJugadores
 from .partida_abc import JuegoBase
 
 if TYPE_CHECKING:
     from ..jugador import Jugador
+    from ..opciones import OpcionesBase
 
 Grilla: TypeAlias = list[list[str]]
 
@@ -26,12 +27,15 @@ class TaTeTi(JuegoBase):
     max_jugadores: int = 2
 
 
-    def __init__(self, jugadores: ListaJugadores, **kwargs) -> None:
+    def __init__(self,
+                 jugadores: ListaJugadores,
+                 opciones: Optional["OpcionesBase"]=None,
+                 **kwargs) -> None:
         """
         Inicializa un juego.
         """
 
-        super().__init__(jugadores, **kwargs)
+        super().__init__(jugadores, opciones, **kwargs)
 
         if len(self.jugadores) != 2:
             raise ValueError("Más de dos jugadores están jugando Tres en Raya.")
@@ -82,13 +86,44 @@ class TaTeTi(JuegoBase):
         self.mensaje = f"Turno de **{self.jugador_actual.nombre} [ {self.ficha_actual} ]**"
 
 
+    def _turno_par(self) -> bool:
+        """
+        Es un turno par.
+        """
+
+        return self.turno_actual % 2 == 0
+
+
+    def _turno_impar(self) -> bool:
+        """
+        Es un turno impar.
+        """
+
+        return self.turno_actual % 2 == 1
+
+
     @property
     def jugador_actual(self) -> "Jugador":
         """
         Devuelve un jugador según el turno actual.
         """
 
-        return self.jugadores[(self.turno_actual % 2)]
+        if self.opciones is None or self.opciones.empieza_primer_jugador:
+            return self.jugadores[(self.turno_actual % 2)]
+
+        return self.jugadores[(self.turno_actual % 2) - 1]
+
+
+    def _orden_fichas(self) -> tuple[str, str]:
+        """
+        Devuelve una tupla indicando qué ficha debería
+        ir primero y cuál después.
+        """
+
+        if self.opciones is None or self.opciones.empieza_primer_jugador:
+            return (self.ficha_1, self.ficha_2)
+
+        return (self.ficha_2, self.ficha_1)
 
 
     @property
@@ -97,9 +132,11 @@ class TaTeTi(JuegoBase):
         Devuelve una ficha de jugador según el turno actual.
         """
 
-        return (self.ficha_1
-                if self.turno_actual % 2 == 0
-                else self.ficha_2)
+        prim, seg = self._orden_fichas()
+
+        return (prim
+                if self._turno_par()
+                else seg)
 
 
     @property
@@ -108,9 +145,11 @@ class TaTeTi(JuegoBase):
         Devuelve una ficha de jugador según el turno anterior.
         """
 
-        return (self.ficha_1
-                if self.turno_actual % 2 == 1
-                else self.ficha_2)
+        prim, seg = self._orden_fichas()
+
+        return (prim
+                if self._turno_impar()
+                else seg)
 
 
     def _es_ficha_actual(self, col: int, fil: str) -> bool:

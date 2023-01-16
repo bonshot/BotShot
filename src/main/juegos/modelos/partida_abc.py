@@ -7,7 +7,7 @@ from secrets import token_hex
 from typing import TYPE_CHECKING, Optional, TypeAlias
 
 if TYPE_CHECKING:
-    from ..jugador import ListaJugadores
+    from ..jugador import ListaJugadores, Jugador
     from ..opciones import OpcionesBase
 
 ListaJuegos: TypeAlias = list[type["JuegoBase"]]
@@ -72,6 +72,36 @@ class JuegoBase(ABC):
         """
 
         return
+
+
+    @property
+    def cantidad_jugadores(self) -> int:
+        """
+        Devuelve la cantidad de jugadores.
+        """
+
+        return len(self.jugadores)
+
+
+    def existe_jugador(self, *, id_jugador: str) -> bool:
+        """
+        Basado en el id de un jugador, decide si el pasado está
+        entre los jugadores actuales.
+        """
+
+        return any(id_jugador == jugador.id for jugador in self.jugadores)
+
+
+    def get_jugador(self, id_jugador: str) -> Optional["Jugador"]:
+        """
+        Consigue un jugador por id.
+        """
+
+        for jugador in self.jugadores:
+            if id_jugador == jugador.id:
+                return jugador
+
+        return None
 
 
     @abstractmethod

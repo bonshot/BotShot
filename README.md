@@ -43,7 +43,7 @@ almacenarlas en un directorio designado acorde.
 
     - [tinytag](https://pypi.org/project/tinytag/)
 
-    - [rqeuests](https://pypi.org/project/requests/)
+    - [requests](https://pypi.org/project/requests/)
 
 * **[Licencia MIT](LICENSE)**
 

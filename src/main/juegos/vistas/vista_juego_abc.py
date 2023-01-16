@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from discord.ui import View
 
 if TYPE_CHECKING:
+    from ...botshot import BotShot
     from ..modelos import JuegoBase
 
 
@@ -16,6 +17,7 @@ class VistaJuegoBase(View):
     """
 
     def __init__(self,
+                 bot: "BotShot",
                  modelo: "JuegoBase") -> None:
         """
         Inicializa una instancia de una vista de juego.
@@ -23,6 +25,7 @@ class VistaJuegoBase(View):
 
         super().__init__(timeout=None)
 
+        self.bot: "BotShot" = bot
         self.modelo: "JuegoBase" = modelo
         self.modelo.setup()
 

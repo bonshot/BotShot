@@ -11,14 +11,14 @@ from discord.ui import Modal, TextInput
 from ...db import CursorDesc, ejecutar_linea, ejecutar_script
 
 
-class CommandDB(Modal):
+class CommandDB(ABC, Modal):
     """
     Clase abstracta para modales de comandos de DB.
     """
 
-    estilo: TextStyle = TextStyle.paragraph
+    # Para rellenar, en realidad este nunca va a ser usado
     comando: TextInput = TextInput(label="script",
-                                   style=estilo,
+                                   style=TextStyle.paragraph,
                                    custom_id="db_cmd_command",
                                    placeholder="Escribe el script aquí...",
                                    required=True,
@@ -106,7 +106,12 @@ class ScriptDB(CommandDB):
     Modal para ejecutar scripts en la DB.
     """
 
-    estilo: TextStyle = TextStyle.long
+    comando: TextInput = TextInput(label="script",
+                                   style=TextStyle.long,
+                                   custom_id="db_script_command",
+                                   placeholder="Escribe el script aquí...",
+                                   required=True,
+                                   row=0)
 
 
     def titulo(self) -> str:
@@ -138,7 +143,12 @@ class LineaDB(CommandDB):
     Modal para ejecutar scripts en la DB.
     """
 
-    estilo: TextStyle = TextStyle.short
+    comando: TextInput = TextInput(label="comando de línea",
+                                   style=TextStyle.short,
+                                   custom_id="db_line_command",
+                                   placeholder="Escribe el comando aquí...",
+                                   required=True,
+                                   row=0)
 
 
     def titulo(self) -> str:

@@ -2,16 +2,18 @@
 Módulo para un manejador del Tres en Raya.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from ..modelos import TaTeTi
-from ..vistas import VistaTaTeTi
+from ..opciones import OpcionesTaTeTi
+from ..vistas import VistaTaTeTi, VistaOpcionesTaTeTi
 from .manejador_abc import ManejadorBase
 
 if TYPE_CHECKING:
 
     from ..modelos import JuegoBase
-    from ..vistas import VistaJuegoBase
+    from ..opciones import OpcionesBase
+    from ..vistas import VistaJuegoBase, VistaOpcionesBase
 
 
 class ManejadorTaTeTi(ManejadorBase):
@@ -35,3 +37,24 @@ class ManejadorTaTeTi(ManejadorBase):
         """
 
         return VistaTaTeTi
+
+
+    @staticmethod
+    def clase_opciones() -> Optional[type["OpcionesBase"]]:
+        """
+        Devuelve las opciones del juego, de tenerlas.
+
+        A diferencia del modelo, no es obligatorio tener
+        opciones.
+        """
+
+        return OpcionesTaTeTi
+
+
+    @staticmethod
+    def clase_vista_opciones() -> Optional["VistaOpcionesBase"]:
+        """
+        Devuelve la vista de las opciones del juego.
+        """
+
+        return VistaOpcionesTaTeTi

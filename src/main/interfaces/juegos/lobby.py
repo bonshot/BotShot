@@ -2,7 +2,7 @@
 Módulo para esperar a iniciar un juego.
 """
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from discord import Interaction
 from discord import PartialEmoji as Emoji
@@ -15,6 +15,39 @@ if TYPE_CHECKING:
     from ...juegos.manejadores import ManejadorBase
 
 
+class BotonOpciones(Button):
+    """
+    Botón para entrar en opciones.
+    """
+
+    def __init__(self, manejador: "ManejadorBase"):
+        """
+        Inicializa una instancia de 'BotonOpciones'.        
+        """
+
+        super().__init__(style=ButtonStyle.gray,
+                         label="Opciones",
+                         disabled=False,
+                         custom_id="game_options",
+                         emoji=Emoji.from_str("\U00002699"),
+                         row=3)
+
+        self.manejador: "ManejadorBase" = manejador
+
+
+    async def callback(self, interaccion: Interaction) -> Any:
+        """
+        El usuario seleccionó las opciones.
+        Se da por hecho que las opciones y su vista no son `None`.
+        """
+
+        opciones = self.manejador.opciones
+        vista_opciones = self.manejador.vista_opciones
+        
+        await interaccion.response.edit_message(content=opciones.mensaje,
+                                                view=vista_opciones)
+
+
 class Lobby(View):
     """
     Sala de espera para juegos.
@@ -24,14 +57,18 @@ class Lobby(View):
                  manejador: "ManejadorBase",
                  timeout: Optional[float]=300.0) -> None:
         """
-        Inicializa una instancia de 'SLobby'.
+        Inicializa una instancia de 'Lobby'.
         """
 
         super().__init__(timeout=timeout)
 
         self.clase_juego: type["ManejadorBase"] = type(manejador)
         self.manejador: "ManejadorBase" = manejador
-        self.jugador_host: Jugador = manejador.lista_jugadores[0] # Siempre será el primero
+
+        if self.manejador.hay_opciones():
+            self.add_item(BotonOpciones(self.manejador))
+            if self.manejador.vista_opciones.menu_anterior is None:
+                self.manejador.vista_opciones.menu_anterior = self
 
 
     def es_host(self, id_usuario: str) -> bool:
@@ -39,7 +76,7 @@ class Lobby(View):
         Determina si una persona es el host de la partida.
         """
 
-        return id_usuario == self.jugador_host.id
+        return id_usuario == self.manejador.jugador_host.id
 
 
     async def refrescar_mensaje(self,
@@ -112,7 +149,7 @@ class Lobby(View):
         autor = interaccion.user
         mensaje = None
 
-        if str(autor.id) == self.jugador_host.id:
+        if self.es_host(str(autor.id)):
             mensaje = f"{autor.mention}, vos sos el anfitrión, no podés salir sin cerrar el lobby."
         elif str(autor.id) not in list(jug.id for jug in self.manejador.lista_jugadores):
             mensaje = f"{autor.mention}, *vos no estás unido.*"
@@ -148,7 +185,8 @@ class Lobby(View):
             return
 
         if not self.es_host(str(autor.id)):
-            msg = (f"{autor.mention}: sólo el host, **{self.jugador_host.nombre}**, puede " +
+            host = self.manejador.jugador_host
+            msg = (f"{autor.mention}: sólo el host, **{host.nombre}**, puede " +
                     "iniciar la partida.")
             self.actualizar_botones()
             await self.refrescar_mensaje(interaccion, msg)

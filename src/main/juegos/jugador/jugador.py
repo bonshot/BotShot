@@ -30,7 +30,9 @@ class Jugador:
         Los argumentos extra se guardan en un atributo especial 'extras'
         """
 
-        self.nombre: str = nombre
+        self.nombre: str = (nombre
+                            if len(nombre) <= LONGITUD_MAXIMA_NOMBRE
+                            else nombre[:LONGITUD_MAXIMA_NOMBRE])
         self.id: str = id
         self.emoji: Optional[str] = emoji_preferido
 
