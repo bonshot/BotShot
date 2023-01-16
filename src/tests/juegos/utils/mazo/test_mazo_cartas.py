@@ -53,7 +53,7 @@ class TestMazo(TestCase):
                 num_esperado = 0
             else:
                 num_esperado = 4
-            self.assertEquals(stats[i], num_esperado)
+            self.assertEqual(stats[i], num_esperado)
 
         for palo in Palo:
             if palo == Palo.COMODIN:
