@@ -4,6 +4,10 @@ Módulo para el modelado de un jugador.
 
 from typing import Optional, TypeAlias
 
+from discord import User
+
+from ...db.atajos import get_jugador, registrar_jugador
+
 LONGITUD_MAXIMA_NOMBRE = 30
 """
 Longitud máxima que debe tener un nombre de jugador.
@@ -16,6 +20,32 @@ class Jugador:
     """
     Clase que emula un jugador.
     """
+
+    @classmethod
+    def desde_usuario_discord(cls, usuario: User) -> "Jugador":
+        """
+        Trata de cargar un usuario de discord guardado en la
+        DB como un jugador, sino crea uno nuevo.
+        """
+
+        jug = get_jugador(str(usuario.id))
+        extras = {
+            "discriminador": usuario.discriminator
+        }
+
+        if jug is None:
+            registrar_jugador(id_jugador=str(usuario.id),
+                              nombre=usuario.display_name)
+            return cls(nombre=usuario.display_name,
+                       id=str(usuario.id),
+                       **extras)
+
+        id_jug, nombre, emoji = jug
+        return cls(nombre=nombre,
+                   id=id_jug,
+                   emoji_preferido=emoji,
+                   **extras)
+
 
     def __init__(self,
                  nombre: str,

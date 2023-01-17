@@ -248,3 +248,15 @@ def existe_dato_en_tabla(tabla: str,
     "Se fija si existe un dato coincidente en la tabla especificada."
 
     return bool(sacar_datos_de_tabla(tabla, **condiciones))
+
+
+def emoji_str(codepoint: str) -> str:
+    """
+    Función auxiliar que convierte un string del formato 'U+XXXX' a '\\U0000XXXX'.
+    """
+
+    if not codepoint.startswith("U+"):
+        raise ValueError("El string debe tener el formato 'U+XXXX'.")
+
+    escape = chr(int(codepoint[2:], 16)).encode("unicode-escape").decode("UTF-8") # '\\uXXXX'
+    return eval(f"\"{escape}\"") # Evaluarlo porque sino agarra el string tal cual

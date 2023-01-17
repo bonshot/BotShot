@@ -121,6 +121,24 @@ class ManejadorBase(ABC):
         return cls.clase_modelo().nombre_juego()
 
 
+    @classmethod
+    def descripcion_juego(cls) -> Optional[str]:
+        """
+        Devuelve la descripción a mostrar del juego, si la hay.
+        """
+
+        return cls.clase_modelo().descripcion_juego()
+
+
+    @classmethod
+    def emojis_juego(cls) -> Optional[str]:
+        """
+        Devuelve el emoji para mostrar del juego, si lo hay.
+        """
+
+        return cls.clase_modelo().emojis_juego()
+
+
     @property
     def modelo(self) -> Optional["JuegoBase"]:
         """

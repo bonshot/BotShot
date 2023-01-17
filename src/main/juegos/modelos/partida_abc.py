@@ -20,6 +20,8 @@ class JuegoBase(ABC):
 
     _ignorar: bool = False
     nombre_muestra: Optional[str] = None
+    descripcion: Optional[str] = None # No más de 100 caracteres
+    emojis_muestra: Optional[tuple[str, ...]] = None
     min_jugadores: int = 1
     max_jugadores: int = 2
 
@@ -45,6 +47,24 @@ class JuegoBase(ABC):
         """
 
         return (cls.nombre_muestra if cls.nombre_muestra is not None else cls.__name__)
+
+
+    @classmethod
+    def descripcion_juego(cls) -> Optional[str]:
+        """
+        Devuelve la descripción a mostrar del juego, si la hay.
+        """
+
+        return cls.descripcion
+
+
+    @classmethod
+    def emojis_juego(cls) -> Optional[str]:
+        """
+        Devuelve el emoji asignado al juego, si lo hay.
+        """
+
+        return cls.emojis_muestra
 
 
     def __init__(self,
@@ -129,3 +149,14 @@ class JuegoBase(ABC):
         """
 
         raise NotImplementedError
+
+
+    def empate(self) -> bool:
+        """
+        Un método opcional para determinar si
+        el juego terminó en empate.
+
+        Por defecto devuelve `False`.
+        """
+
+        return False

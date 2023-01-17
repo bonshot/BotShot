@@ -23,8 +23,11 @@ class TaTeTi(JuegoBase):
     """
 
     nombre_muestra: str = "Tres en Raya"
+    descripcion: str = "Trata de alinear 3 de tus fichas en un tablero 3x3."
+    emojis_muestra: tuple[str, ...] = (X, O)
     min_jugadores: int = 2
     max_jugadores: int = 2
+
 
 
     def __init__(self,
@@ -255,7 +258,10 @@ class TaTeTi(JuegoBase):
             self._empate = True
             return
 
-        cols = fils = diags = rdiags = 0
+        cols = 0
+        fils = 0
+        diags = 0
+        rdiags = 0
         n = self.dim - 1 # Siempre uno menos que la dimensión de la grilla
         for i in range(self.dim):
             if self._es_ficha_actual(col, i):

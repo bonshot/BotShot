@@ -35,17 +35,14 @@ almacenarlas en un directorio designado acorde.
 
 * **[Cómo Ejecutar](#cómo-ejecutar)**
 
-* **[Dependencias](requirements.txt)**
-
-    - [discord.py](https://pypi.org/project/discord.py/) *(con soporte de voz)*
-
-    - [python-dotenv](https://pypi.org/project/python-dotenv/)
-
-    - [tinytag](https://pypi.org/project/tinytag/)
-
-    - [requests](https://pypi.org/project/requests/)
-
-    - [Pillow](https://pypi.org/project/Pillow/)
+| **[Dependencias](requirements.txt)**|
+| :---------------------------------: |
+| [discord.py](https://pypi.org/project/discord.py/) *(con soporte de voz)*|
+| [python-dotenv](https://pypi.org/project/python-dotenv/)|
+| [tinytag](https://pypi.org/project/tinytag/)|
+| [requests](https://pypi.org/project/requests/)|
+| [Pillow](https://pypi.org/project/Pillow/)|
+| [emoji](https://pypi.org/project/emoji/)|
 
 * **[Licencia MIT](LICENSE)**
 

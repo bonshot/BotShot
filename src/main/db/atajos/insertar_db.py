@@ -2,8 +2,12 @@
 Módulo para atajos de INSERT.
 """
 
+from typing import Optional
+
 from ..database import (actualizar_dato_de_tabla, existe_dato_en_tabla,
                         insertar_datos_en_tabla)
+from .actualizar_db import (actualizar_emoji_de_jugador,
+                            actualizar_nombre_de_jugador)
 from .consulta_db import existe_canal_escuchado
 from .sacar_db import get_prefijo_default
 
@@ -18,7 +22,9 @@ def actualizar_guild(guild_id: int, nombre_guild: str) -> bool:
     if existe_dato_en_tabla(tabla="guilds", id=guild_id):
         actualizar_dato_de_tabla(tabla="guilds",
                                  nombre_col="nombre",
-                                 valor=nombre_guild)
+                                 valor=nombre_guild,
+                                 # condiciones,
+                                 id=guild_id)
         return True
 
     insertar_datos_en_tabla(tabla="guilds",
@@ -107,3 +113,30 @@ def registrar_usuario_autorizado(nombre: str,
                             llave_primaria_por_defecto=False,
                             valores=(id_usuario, nombre, discriminador))
     return True
+
+
+def registrar_jugador(id_jugador: str,
+                      nombre: str,
+                      emoji: Optional[str]=None) -> bool:
+    """
+    Registra un jugador en la DB.
+
+    Si el jugador ya existe devuelve `False` y trata de actualizarlo;
+    sino devuelve `True`.
+    """
+
+    emoji_val = (emoji if emoji is not None else " ")
+
+    if existe_dato_en_tabla(tabla="jugadores",
+                            id=id_jugador):
+        actualizar_nombre_de_jugador(id_jugador=id_jugador,
+                                     nuevo_nombre=nombre)
+        actualizar_emoji_de_jugador(id_jugador=id_jugador,
+                                    nuevo_emoji=emoji_val)
+        return False
+
+    insertar_datos_en_tabla(tabla="jugadores",
+                            llave_primaria_por_defecto=False,
+                            valores=(id_jugador, nombre, emoji_val))
+    return True
+

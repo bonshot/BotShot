@@ -131,7 +131,7 @@ class Lobby(View):
         elif self.manejador.cantidad_jugadores >= self.manejador.max_jugadores:
             mensaje = "Cantidad máxima de jugadores alcanzada."
         else:
-            self.manejador.lista_jugadores.append(Jugador(autor.display_name, str(autor.id)))
+            self.manejador.lista_jugadores.append(Jugador.desde_usuario_discord(autor))
 
         self.actualizar_botones()
         await self.refrescar_mensaje(interaccion, mensaje)

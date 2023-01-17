@@ -2,6 +2,7 @@
 Módulo para seleccionar un juego.
 """
 
+from random import choice
 from typing import TYPE_CHECKING, Optional, TypeAlias
 
 from discord import Interaction, SelectOption
@@ -36,10 +37,15 @@ class MenuJuegos(Select):
 
         desde = self.selector.pagina * self.selector.cantidad_elementos
         hasta = (self.selector.pagina + 1) * self.selector.cantidad_elementos
-        lista_nombres_juegos=list(self.selector.juegos.keys())[desde:hasta]
+        lista_juegos=list(self.selector.juegos.values())[desde:hasta]
 
-        opciones = [SelectOption(label=' '.join(nombre_juego.split('_')), value=nombre_juego)
-                                 for nombre_juego in lista_nombres_juegos]
+        opciones = [SelectOption(label=' '.join(juego.nombre_juego().split('_')),
+                                 value=juego.nombre_juego(),
+                                 description=juego.descripcion_juego(),
+                                 emoji=(juego.emojis_juego()
+                                        if juego.emojis_juego() is None
+                                        else choice(juego.emojis_juego())))
+                                 for juego in lista_juegos]
 
         super().__init__(custom_id="game_selection_menu",
                          placeholder="Seleccione un juego",
@@ -58,8 +64,8 @@ class MenuJuegos(Select):
         eleccion = self.values[0]
         autor = interaccion.user
 
-        jugadores = [Jugador(nombre=autor.display_name,
-                             id=str(autor.id))]
+        host = Jugador.desde_usuario_discord(autor)
+        jugadores = [host]
         manejador = self.selector.juegos[eleccion](bot=self.selector.bot,
                                                    jugadores=jugadores,
                                                    **interaccion.extras)
@@ -73,6 +79,8 @@ class SelectorJuegos(Paginador):
     """
     Clase para seleccionar un juego que iniciar.
     """
+
+    max_elementos_por_pagina: int = 5
 
     def __init__(self,
                  bot: "BotShot",

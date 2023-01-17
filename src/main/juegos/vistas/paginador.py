@@ -2,11 +2,6 @@
 Vista general de varias páginas.
 """
 
-
-"""
-Módulo para seleccionar un juego.
-"""
-
 from collections.abc import Sequence
 from typing import Optional
 

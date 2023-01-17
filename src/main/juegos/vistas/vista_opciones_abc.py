@@ -49,4 +49,8 @@ class VistaOpcionesBase(Paginador):
         Vuelve al lobby.
         """
 
-        await interraccion.response.edit_message(view=self.menu_anterior)
+        if self.menu_anterior is not None:
+            await interraccion.response.edit_message(view=self.menu_anterior)
+            return
+
+        await interraccion.response.edit_message(content="*No hay un lobby asignado...*")

@@ -3,9 +3,9 @@ Módulo para atajos de sacar datos de una DB.
 """
 
 from os import PathLike
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 
-from ..database import sacar_datos_de_tabla
+from ..database import emoji_str, sacar_datos_de_tabla
 
 if TYPE_CHECKING:
     from ..database import FetchResult
@@ -156,3 +156,21 @@ def get_usuarios_autorizados() -> list[Tuple[int, str, int]]:
 
     return sacar_datos_de_tabla(tabla="usuarios_autorizados",
                                 sacar_uno=False)
+
+
+def get_jugador(id_jugador: str) -> Optional[Tuple[str, str, str]]:
+    """
+    Consigue un jugador de la DB.
+    """
+
+    res = sacar_datos_de_tabla(tabla="jugadores",
+                               sacar_uno=True,
+                               id=id_jugador)
+
+    res = (res if bool(res) else None)
+
+    if res is None:
+        return res
+
+    id_jug, nombre, emoji = res
+    return id_jug, nombre, (emoji_str(emoji) if emoji.strip() else None)
