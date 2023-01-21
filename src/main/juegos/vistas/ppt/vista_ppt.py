@@ -2,11 +2,12 @@
 Módulo para la vista de una partida de Piedra, Papel o Tijeras.
 """
 
-from typing import TYPE_CHECKING, Any, Callable, Optional, Self, TypeAlias
+from typing import TYPE_CHECKING, Callable, Optional, Self, TypeAlias
 
-from discord import ButtonStyle, Interaction, Message
+from discord import Interaction, Message
 from discord import PartialEmoji as Emoji
 from discord import User
+from discord.enums import ButtonStyle
 from discord.ui import Button, View, button
 
 from ...modelos import EMOJI_PAPEL, EMOJI_PIEDRA, EMOJI_TIJERAS, EleccionPPT
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
 
     from ....botshot import BotShot
     from ...modelos import JuegoBase
+    from ...registradores import RegistradorBase
 
 
 DecidirFunc: TypeAlias = Callable[[Self, EleccionPPT], None]
@@ -24,46 +26,10 @@ DecidirFunc: TypeAlias = Callable[[Self, EleccionPPT], None]
 CHECKMARK: str = "\U00002705"
 
 
-class BotonComenzar(Button):
-    """
-    Botón para comenzar la partida.
-    """
-
-    def __init__(self, vista: "VistaPPT"):
-        """
-        Inicializa una instancia de 'BotonComenzar'.        
-        """
-
-        super().__init__(style=ButtonStyle.primary,
-                         label="Comenzar",
-                         disabled=False,
-                         custom_id="ppt_start",
-                         row=0)
-
-        self.vista: "VistaPPT" = vista
-
-
-    async def callback(self, interaccion: Interaction) -> Any:
-        """
-        Comienza la partida.
-        """
-
-        await self.vista.comenzar(interaccion)
-
-
 class ReiniciarPPT(VistaReiniciarBase):
     """
     Vista para reiniciar un juego de Piedra, Papel o Tijeras.
     """
-
-    async def reiniciar_extra(self, interaccion: Interaction) -> None:
-        """
-        Reinicia el Piedra, Papel o Tijeras.
-        """
-
-        self.maestra.modelo.reiniciar()
-        await interaccion.message.edit(content=self.maestra.modelo.mensaje,
-                                       view=VistaPPT(self.maestra.bot, self.maestra.modelo))
 
 
 class VistaPPT(VistaJuegoBase):
@@ -73,30 +39,41 @@ class VistaPPT(VistaJuegoBase):
 
     def __init__(self,
                  bot: "BotShot",
-                 modelo: "JuegoBase") -> None:
+                 modelo: "JuegoBase",
+                 registrador: Optional["RegistradorBase"],
+                 mensaje_raiz: Optional[Message]) -> None:
         """
         Inicializa una instancia de una vista de juego.
         """
 
-        super().__init__(bot=bot, modelo=modelo)
+        super().__init__(bot=bot,
+                         modelo=modelo,
+                         registrador=registrador,
+                         mensaje_raiz=mensaje_raiz)
 
         self.jugador_1, self.jugador_2 = self.modelo.jugadores
         self.nombre_eleccion_1: Optional[str] = None
         self.nombre_eleccion_2: Optional[str] = None
-        self.add_item(BotonComenzar(self))
 
 
-    async def comenzar(self, interaccion: Interaction) -> None:
+    @staticmethod
+    def agregar_boton_cerrar() -> bool:
+        """
+        Decide si agregar un botón para cerrar la vista.
+        """
+
+        return False
+
+
+    async def setup(self) -> None:
         """
         Da comienzo al juego.
-        Es necesario que esta función sea asincrónica.
         """
 
         self.clear_items()
 
         self.usuario_1: User = await self.bot.fetch_user(int(self.jugador_1.id))
         self.usuario_2: User = await self.bot.fetch_user(int(self.jugador_2.id))
-        self.mensaje_original: Message = interaccion.message
 
         # Hay que crear referencias a los mensajes directos para después seguirlos
         msg = "**¡Elige! ¿Piedra, Papel o Tijeras?**"
@@ -107,8 +84,8 @@ class VistaPPT(VistaJuegoBase):
                                                       view=VistaPPTPrivada(maestra=self,
                                                                            es_primer_jugador=False))
 
-        await interaccion.response.edit_message(content=self.modelo.mensaje,
-                                                view=self)
+        await self.mensaje_raiz.edit(content=self.modelo.mensaje,
+                                     view=self)
 
 
     async def refrescar_mensaje(self,
@@ -118,8 +95,8 @@ class VistaPPT(VistaJuegoBase):
         Refresca el mensaje de la vista.
         """
 
-        await self.mensaje_original.edit(content=mensaje,
-                                         view=(self if vista is None else vista))
+        await self.mensaje_raiz.edit(content=mensaje,
+                                     view=(self if vista is None else vista))
 
 
     async def terminar(self) -> None:
@@ -136,6 +113,7 @@ class VistaPPT(VistaJuegoBase):
                                delete_after=10.0,
                                view=None)
 
+        self.refrescar_stats_ppt()
         # Desde acá las dos elecciones no pueden ser `None`
         msg = (f"**{self.jugador_1.nombre}** eligió `{self.nombre_eleccion_1}`, mientras que " +
                f"**{self.jugador_2.nombre}** eligió `{self.nombre_eleccion_2}`.")
@@ -150,6 +128,29 @@ class VistaPPT(VistaJuegoBase):
         extra = f"\n\n*¿... otra?*\t**(0 / {self.modelo.cantidad_jugadores})**"
         await self.refrescar_mensaje(mensaje=msg + extra,
                                      vista=ReiniciarPPT(self))
+
+
+    def refrescar_stats_ppt(self) -> None:
+        """
+        Refresca las estadísticas de cada jugador.
+        """
+
+        stats_base = self.registrador.stats_base()
+        jug_1 = self.modelo.determinar_ganador() or self.jugador_1
+        jug_2 = self.modelo.determinar_perdedor() or self.jugador_2
+
+        _, vic1, emp1, der1 = self.registrador.get_datos(jug_1.id, stats_base)
+        _, vic2, emp2, der2 = self.registrador.get_datos(jug_2.id, stats_base)
+
+        if self.modelo.empate():
+            emp1 += 1
+            emp2 += 1
+        else:
+            vic1 += 1
+            der2 += 1
+
+        self.refrescar_datos(id_jugador=jug_1.id, victorias=vic1, empates=emp1, derrotas=der1)
+        self.refrescar_datos(id_jugador=jug_2.id, victorias=vic2, empates=emp2, derrotas=der2)
 
 
 class VistaPPTPrivada(View):

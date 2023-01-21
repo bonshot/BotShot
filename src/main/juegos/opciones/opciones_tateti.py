@@ -34,6 +34,7 @@ class OpcionesTaTeTi(OpcionesBase):
         """
         Invierte el valor de la variable que decide si el
         primer jugador debería ir primero.
+
         Devuelve el nuevo valor.
         """
 

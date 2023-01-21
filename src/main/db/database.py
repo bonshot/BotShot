@@ -3,76 +3,22 @@ Módulo de bases de datos.
 """
 
 from os import PathLike
-from sqlite3 import connect
+from sqlite3 import connect, OperationalError
 from typing import Any, Dict, List, Literal, Optional, Tuple, TypeAlias, Union
 
-DictConds: TypeAlias = Dict[str, Any]
+from .db_tipos import TiposDB
+
+DictConds: TypeAlias = Any
 ValoresResolucion: TypeAlias = Literal["ABORT", "FAIL", "IGNORE", "REPLACE", "ROLLBACK"]
 _SingularResult: TypeAlias = Tuple[Union[None, int, str]]
 FetchResult: TypeAlias = Union[List[_SingularResult], _SingularResult]
 CursorDesc: TypeAlias = Dict[str, Union[None, Tuple[str, ...], str, int]]
+DictLlaveForanea: TypeAlias = Dict[str, Tuple[str, str]]
 
 DEFAULT_DB: PathLike = "src/main/db/db.sqlite3"
 RESOLUCIONES: Tuple[str, ...] = "ABORT", "FAIL", "IGNORE", "REPLACE", "IGNORE"
-
-
-def crear_nueva_db(db_path: PathLike[str]="") -> None:
-    """
-    Crea una nueva db a partir de una plantilla.
-    Esta NO será la db que BotShot use a menos que sea
-    la del DEFAULT_DB.
-    """
-
-    db_path = db_path or DEFAULT_DB
-
-    with connect(db_path) as con:
-        cur = con.cursor()
-        cur.executescript("""--sql
-        
-        CREATE TABLE propiedades (
-            prop_id INTEGER PRIMARY KEY,
-            nombre TEXT,
-            valor TEXT
-        ) STRICT;
-
-        CREATE TABLE guilds (
-            id INTEGER PRIMARY KEY,
-            nombre TEXT
-        ) STRICT;
-
-        CREATE TABLE prefijos (
-            id INTEGER PRIMARY KEY,
-            id_guild INTEGER,
-            prefijo TEXT,
-            FOREIGN KEY(id_guild) REFERENCES guilds(id)
-        ) STRICT;
-
-        CREATE TABLE paths (
-            id_path INTEGER PRIMARY KEY,
-            nombre_path TEXT,
-            fpath TEXT
-        ) STRICT;
-
-        CREATE TABLE canales_escuchables (
-            id INTEGER PRIMARY KEY,
-            guild_id INTEGER,
-            nombre TEXT,
-            FOREIGN KEY(guild_id) REFERENCES guilds(id)
-        ) STRICT;
-
-        CREATE TABLE carpetas_recomendadas (
-            id INTEGER PRIMARY KEY,
-            recomendacion TEXT,
-            nombre_usuario TEXT,
-            id_usuario INTEGER
-        ) STRICT;
-
-        CREATE TABLE usuarios_autorizados (
-            id INTEGER PRIMARY KEY,
-            nombre TEXT,
-            discriminador INTEGER
-        ) STRICT;
-        """)
+ESTRICTO_NO_ACEPTADOS: list[TiposDB] = [TiposDB.NULL]
+NO_ESTRICTO_NO_ACEPTADOS: list[TiposDB] = [TiposDB.INT, TiposDB.ANY]
 
 
 def ejecutar_comando(comando: str, es_script: bool, db_path: PathLike[str]) -> CursorDesc:
@@ -158,18 +104,102 @@ def nombres_tablas(db_path: PathLike=DEFAULT_DB) -> tuple[str, ...]:
     return tuple(t[0] for t in res)
 
 
+def existe_tabla(nombre_tabla: str, db_path: PathLike=DEFAULT_DB)-> bool:
+    """
+    Verifica, por su nombre, si una tabla existe en la DB especificada.
+    """
+
+    return nombre_tabla in nombres_tablas(db_path=db_path)
+
+
+def _formatear_llaves_foraneas(dic_llaves: DictLlaveForanea,
+                               nombres_revisados: list[str]) -> str:
+    """
+    Formatea las llaves foráneas en un formato amigable.
+    """
+
+    llaves = []
+
+    for nombre_col, (tabla_for, col_for) in dic_llaves.items():
+        if nombre_col not in nombres_revisados:
+            raise ValueError((f"Nombre de llave foránea {nombre_col!r} no coincide " +
+                              "con los de la tabla"))
+
+        llaves.append(f"FOREIGN KEY({nombre_col}) REFERENCES {tabla_for}({col_for})")
+
+    return ", ".join(llaves)
+
+
+def crear_tabla(nombre: str,
+                *,
+                db_path: PathLike=DEFAULT_DB,
+                estricta: bool=True,
+                llave_primaria: Optional[str]=None,
+                llaves_foraneas: Optional[DictLlaveForanea]=None,
+                **kwargs: TiposDB) -> Optional[CursorDesc]:
+    """
+    Intenta crear una nueva tabla, con las especificaciones dadas.
+
+    Si no tiene éxito, devuelve `None`.
+    """
+
+    if nombre in nombres_tablas(db_path):
+        return None
+
+    tipos = []
+    _nombres_revisados = []
+
+    for nombre_col, tipo_col in kwargs.items():
+        nom_col = nombre_col.lower()
+
+        if not isinstance(tipo_col, TiposDB):
+            raise TypeError(f"El tipo de columna debe ser {TiposDB.__name__}")
+        
+        if nom_col in _nombres_revisados:
+            raise ValueError(f"Nombre de columna {nom_col!r} repetido")
+
+        if estricta and tipo_col in ESTRICTO_NO_ACEPTADOS:
+            raise ValueError(f"Tipo de dato {tipo_col.value} no válido en tabla estricta")
+
+        if not estricta and tipo_col in NO_ESTRICTO_NO_ACEPTADOS:
+            raise ValueError(f"Tipo de dato {tipo_col.value} no válido en tabla no estricta")
+
+        es_llave = (" PRIMARY KEY"
+                     if (llave_primaria is not None
+                         and llave_primaria.lower() == nom_col)
+                     else "")
+        tipos.append(f"{nom_col} {tipo_col.value}{es_llave}")
+        _nombres_revisados.append(nom_col)
+
+    cols = ", ".join(tipos)
+    es_estricta = (" STRICT" if estricta else "")
+    foranea = (""
+               if llaves_foraneas is None
+               else f", {_formatear_llaves_foraneas(llaves_foraneas, _nombres_revisados)}")
+
+    return ejecutar_linea(comando=f"CREATE TABLE {nombre} ({cols}{foranea}){es_estricta};",
+                          db_path=db_path)
+
+
 def sacar_datos_de_tabla(tabla: str,
                          sacar_uno: bool=False,
+                         ignorar_excepciones: bool=False,
                          **condiciones: DictConds) -> FetchResult:
     "Saca datos de una base de datos."
 
     res = None
     conds = _condiciones_where(**condiciones)
 
-    with connect(DEFAULT_DB) as con:
-        cur = con.cursor()
-        cur.execute(f"SELECT * FROM {tabla}{conds};")
-        res = (cur.fetchone() if sacar_uno else cur.fetchall())
+    try:
+        with connect(DEFAULT_DB) as con:
+            cur = con.cursor()
+            cur.execute(f"SELECT * FROM {tabla}{conds};")
+            res = (cur.fetchone() if sacar_uno else cur.fetchall())
+    except OperationalError as err:
+        if ignorar_excepciones:
+            return res
+
+        raise err from err
 
     return res
 

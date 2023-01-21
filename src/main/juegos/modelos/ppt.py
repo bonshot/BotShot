@@ -50,7 +50,7 @@ class PPT(JuegoBase):
         super().__init__(jugadores, opciones, **kwargs)
 
         if len(self.jugadores) != 2:
-            raise ValueError("Más de dos jugadores están jugando Tres en Raya.")
+            raise ValueError("Más de dos jugadores están jugando Piedra, Papel o Tijeras.")
 
         jugador_1, jugador_2 = self.jugadores
 
@@ -139,6 +139,17 @@ class PPT(JuegoBase):
         """
 
         return self.grilla_win[self.eleccion_1.value][self.eleccion_2.value]
+
+
+    def determinar_perdedor(self) -> Optional["Jugador"]:
+        """
+        Determina qué jugador perdió la ronda, y lo devuelve.
+        Devuelve `None` si fue empate.
+
+        Se da por hecho que ambos jugadores ya decidieron.
+        """
+
+        return self.grilla_win[self.eleccion_2.value][self.eleccion_1.value]
 
 
     def verificar_win(self) -> None:

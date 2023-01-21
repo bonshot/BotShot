@@ -1,15 +1,15 @@
-# -= BotShot =-
+# -= 𝓑𝓸𝓽𝓢𝓱𝓸𝓽 =-
 
 <img alt="calamardo_guapo.png" align="left" src="media/img/references/handsome_squidward_rtx_circle.png" height=128 width=128 />
 
-![version](https://img.shields.io/badge/version-0.2.0-brightgreen)
+![version](https://img.shields.io/badge/version-0.8.0-brightgreen)
 ![estrellas](https://img.shields.io/github/stars/bonshot/BotShot?label=Estrellas&style=social)
 ![visitas](https://img.shields.io/github/watchers/bonshot/BotShot?label=Visitas&style=social)
 ![Tests](https://github.com/bonshot/BotShot/actions/workflows/tests.yml/badge.svg)
 ![Pylint](https://github.com/bonshot/BotShot/actions/workflows/pylint.yml/badge.svg)
 
 Este bot está pensado para procesar imágenes ~~(en su mayoría +18)~~ y
-almacenarlas en un directorio designado acorde.
+almacenarlas en un directorio designado acorde. Pero en general, evoluciona según necesidades.
 
 <br/>
 <br/>
@@ -31,18 +31,18 @@ almacenarlas en un directorio designado acorde.
 
 <hr style="height:1px; width:35%" />
 
-* **[Enlace de Invitación]()**
+* ~~**[Enlace de Invitación]()**~~
 
 * **[Cómo Ejecutar](#cómo-ejecutar)**
 
 | **[Dependencias](requirements.txt)**|
 | :---------------------------------: |
-| [discord.py](https://pypi.org/project/discord.py/) *(con soporte de voz)*|
-| [python-dotenv](https://pypi.org/project/python-dotenv/)|
-| [tinytag](https://pypi.org/project/tinytag/)|
-| [requests](https://pypi.org/project/requests/)|
-| [Pillow](https://pypi.org/project/Pillow/)|
-| [emoji](https://pypi.org/project/emoji/)|
+| [discord.py](https://pypi.org/project/discord.py/) |
+| [python-dotenv](https://pypi.org/project/python-dotenv/) |
+| [tinytag](https://pypi.org/project/tinytag/) |
+| [requests](https://pypi.org/project/requests/) |
+| [Pillow](https://pypi.org/project/Pillow/) |
+| [emoji](https://pypi.org/project/emoji/) |
 
 * **[Licencia MIT](LICENSE)**
 

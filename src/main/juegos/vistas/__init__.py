@@ -2,6 +2,8 @@
 Paquete para las vistas de los juegos.
 """
 
+from .ahorcado import *
+from .cuatro_en_linea import *
 from .paginador import *
 from .ppt import *
 from .tateti import *

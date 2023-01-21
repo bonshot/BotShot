@@ -15,6 +15,7 @@ Grilla: TypeAlias = list[list[str]]
 
 X: str = "\U0000274C"
 O: str = "\U00002B55"
+VACIO: str = ""
 
 
 class TaTeTi(JuegoBase):
@@ -68,7 +69,7 @@ class TaTeTi(JuegoBase):
         Genera la grilla.
         """
 
-        return [["" for _ in range(dim)] for _ in range(dim)]
+        return [[VACIO for _ in range(dim)] for _ in range(dim)]
 
 
     def _validar_coord(self, x: int, y: int) -> bool:
@@ -115,6 +116,18 @@ class TaTeTi(JuegoBase):
             return self.jugadores[(self.turno_actual % 2)]
 
         return self.jugadores[(self.turno_actual % 2) - 1]
+
+
+    @property
+    def jugador_anterior(self) -> "Jugador":
+        """
+        Devuelve un jugador según el turno anterior.
+        """
+
+        if self.opciones is None or self.opciones.empieza_primer_jugador:
+            return self.jugadores[(self.turno_actual % 2) - 1]
+
+        return self.jugadores[(self.turno_actual % 2)]
 
 
     def _orden_fichas(self) -> tuple[str, str]:
@@ -196,7 +209,7 @@ class TaTeTi(JuegoBase):
         Define si una casilla de la grilla ya tiene una ficha puesta.
         """
 
-        return self.casilla(col, fil) != ""
+        return self.casilla(col, fil) != VACIO
 
 
     def mover(self, col: int, fil: int) -> None:
@@ -228,7 +241,7 @@ class TaTeTi(JuegoBase):
 
         estado = False
 
-        if self._terminado:
+        if self.terminado():
             return estado
 
         col = kwargs.get("col")
@@ -253,7 +266,7 @@ class TaTeTi(JuegoBase):
         De ser así, modifica una flag que lo indica.
         """
 
-        if self.turno_actual >= 8: # Todos las casillas están ocupadas
+        if self.turno_actual >= (self.dim ** 2) - 1: # Todos las casillas están ocupadas
             self._terminado = True
             self._empate = True
             return

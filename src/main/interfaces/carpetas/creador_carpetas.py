@@ -4,11 +4,13 @@ Módulo para explorar y crear una carpeta.
 
 from typing import Optional
 
-from discord import ButtonStyle, Interaction
+from discord import Interaction
 from discord import PartialEmoji as Emoji
+from discord.enums import ButtonStyle
 from discord.ui import Button, button
 
-from ...archivos import crear_dir, lista_nombre_carpetas, partir_ruta, unir_ruta
+from ...archivos import (crear_dir, lista_nombre_carpetas, partir_ruta,
+                         unir_ruta)
 from ...db.atajos import get_imagenes_path
 from .selector_carpetas import MenuCarpetas, SelectorCarpeta
 

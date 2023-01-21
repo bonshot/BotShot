@@ -5,7 +5,8 @@ Módulo para un modal de la DB que ejecuta scripts.
 from abc import ABC, abstractmethod
 from sqlite3 import OperationalError
 
-from discord import Interaction, TextStyle
+from discord import Interaction
+from discord.enums import TextStyle
 from discord.ui import Modal, TextInput
 
 from ...db import CursorDesc, ejecutar_linea, ejecutar_script

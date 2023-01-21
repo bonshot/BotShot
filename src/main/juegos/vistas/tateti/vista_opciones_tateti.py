@@ -1,5 +1,5 @@
 """
-Módulo para la vista e las opciones del Tres en Raya.
+Módulo para la vista de las opciones del Tres en Raya.
 """
 
 from discord import Interaction, ButtonStyle
@@ -14,7 +14,7 @@ class VistaOpcionesTaTeTi(VistaOpcionesBase):
     """
 
     @button(label="Empieza primer jugador",
-            custom_id="prop_player_1_first",
+            custom_id="tic_tac_toe_prop_player_1_first",
             disabled=False,
             style=ButtonStyle.primary,
             row=0)
@@ -30,6 +30,5 @@ class VistaOpcionesTaTeTi(VistaOpcionesBase):
         else:
             boton.label = "Empieza segundo jugador"
 
-        await self.refrescar_mensaje(interaccion=interaccion,
-                                     mensaje=f"Cambiado opción a `{boton.label}`...")
+        await self.refrescar_opciones(interaccion, boton)
 

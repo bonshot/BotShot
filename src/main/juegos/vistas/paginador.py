@@ -3,13 +3,15 @@ Vista general de varias páginas.
 """
 
 from collections.abc import Sequence
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from discord import Interaction
 from discord import PartialEmoji as Emoji
-from discord import TextStyle
-from discord.enums import ButtonStyle
+from discord.enums import ButtonStyle, TextStyle
 from discord.ui import Button, Modal, Select, TextInput, View, button
+
+if TYPE_CHECKING:
+    from discord import Message
 
 
 class SaltarPagina(Modal):
@@ -18,11 +20,11 @@ class SaltarPagina(Modal):
     """
 
     pagina: TextInput = TextInput(label="Página",
-                                   style=TextStyle.short,
-                                   custom_id="pg_select",
-                                   placeholder="Escribe el número de página...",
-                                   required=True,
-                                   row=0)
+                                  style=TextStyle.short,
+                                  custom_id="pg_select",
+                                  placeholder="Escribe el número de página...",
+                                  required=True,
+                                  row=0)
 
 
     def __init__(self, paginador: "Paginador") -> None:
@@ -87,6 +89,7 @@ class Paginador(View):
                  elementos: Sequence,
                  /,
                  *,
+                 mensaje_raiz: Optional["Message"]=None,
                  pagina: int=0,
                  timeout: Optional[float]=300.0) -> None:
         """
@@ -96,6 +99,8 @@ class Paginador(View):
         super().__init__(timeout=timeout)
         self._elementos: Sequence = elementos
         self.pagina: int = pagina
+
+        self.mensaje_raiz: Optional["Message"] = mensaje_raiz
 
         self.refrescar()
 
@@ -145,7 +150,7 @@ class Paginador(View):
 
     def refrescar_extra(self) -> None:
         """
-        Operaciones extra a realizar al refrescar,a ntes de actualizar botones.
+        Operaciones extra a realizar al refrescar, antes de actualizar botones.
         """
 
         return

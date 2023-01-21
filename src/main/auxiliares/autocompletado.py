@@ -2,7 +2,7 @@
 Módulo para funciones de autocompletado.
 """
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from discord import ChannelType, Interaction
 from discord.app_commands import Choice
@@ -11,6 +11,7 @@ from ..archivos import buscar_archivos, partir_ruta
 from ..db import nombres_tablas
 from ..db.atajos import (get_canales_escuchados, get_recomendaciones_carpetas,
                          get_sonidos_path, get_usuarios_autorizados)
+from ..juegos.manejadores import ManejadorBase
 
 if TYPE_CHECKING:
 
@@ -164,4 +165,19 @@ async def autocompletado_nombres_tablas_db(_interaccion: Interaction,
     return [
         Choice(name=tabla, value=tabla) for tabla in nombres_tablas()
         if current.lower() in tabla.lower()
+    ][:25]
+
+
+async def autocompletado_nombres_manejadores(_interaccion: Interaction,
+                                             current: str) -> list[Choice[str]]:
+    """
+    Devuelve los nombres de todos los juegos disponibles.
+    """
+
+    return [
+        Choice(name=(f"{'' if juego.emojis_juego() is None else f'{juego.elegir_emoji()}'} " +
+                     f"{juego.nombre_juego()}"),
+               value=juego.nombre_juego())
+        for juego in ManejadorBase.lista_clases_manejadores
+        if current.lower() in juego.nombre_juego().lower()
     ][:25]

@@ -43,6 +43,12 @@ def get_limite_backup_db() -> int:
     return int(get_propiedad("limite_backup_db"))
 
 
+def get_limite_randart() -> int:
+    "Consigue el límite de imágenes random a mandar."
+
+    return int(get_propiedad("limite_randart"))
+
+
 def get_path_de_db(nombre_path: str) -> PathLike:
     "Consigue un path de la DB."
 
@@ -93,6 +99,24 @@ def get_sonidos_path() -> PathLike:
     "Consigue el path de los sonidos."
 
     return get_path_de_db("sonidos")
+
+
+def get_img_juegos_path() -> PathLike:
+    "Consigue el path de imágenes para juegos."
+
+    return get_path_de_db("img_juegos")
+
+
+def get_fonts_juegos_path() -> PathLike:
+    "Consigue el path de fuentes para juegos."
+
+    return get_path_de_db("fonts_juegos")
+
+
+def get_txt_juegos_path() -> PathLike:
+    "Consigue el path de textos para juegos."
+
+    return get_path_de_db("txt_juegos")
 
 
 def get_prefijo_guild(guild_id: int) -> str:
@@ -174,3 +198,21 @@ def get_jugador(id_jugador: str) -> Optional[Tuple[str, str, str]]:
 
     id_jug, nombre, emoji = res
     return id_jug, nombre, (emoji_str(emoji) if emoji.strip() else None)
+
+
+def get_minecraftia_font() -> PathLike:
+    "Consigue el path a una fuente llamada 'Minecraftia-Regular'."
+
+    return f"{get_fonts_juegos_path()}/Minecraftia-Regular.ttf"
+
+
+def get_cartas_espaniolas_path() -> PathLike:
+    "Consigue el path de las cartas españolas."
+
+    return f"{get_img_juegos_path()}/naipes"
+
+
+def get_mesa_cartas_path() -> PathLike:
+    "Consigue el path de un fondo de mesa de cartas."
+
+    return f"{get_imagenes_path()}/bg/mesa-cartas.png"

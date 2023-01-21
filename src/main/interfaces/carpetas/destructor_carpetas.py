@@ -4,8 +4,9 @@ Módulo para explorar y borrar una carpeta.
 
 from typing import Optional
 
-from discord import ButtonStyle, Interaction
+from discord import Interaction
 from discord import PartialEmoji as Emoji
+from discord.enums import ButtonStyle
 from discord.ui import Button, button
 
 from ...archivos import lista_nombre_carpetas, partir_ruta, unir_ruta

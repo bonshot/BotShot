@@ -8,6 +8,7 @@ from .jugador import *
 # from .manejadores import *
 # from .modelos import *
 # from .opciones import *
+# from .registradores import *
 # from .utils import *
 # from .vistas import *
 # # ------------------------- #

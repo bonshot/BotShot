@@ -2,9 +2,10 @@
 Cog para manejar comandos de juegos.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from discord import Interaction
+from discord.app_commands import autocomplete
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
 from emoji import is_emoji
@@ -13,7 +14,9 @@ from ...db.atajos import (actualizar_emoji_de_jugador,
                           actualizar_nombre_de_jugador)
 from ...interfaces import SelectorJuegos
 from ...juegos import LONGITUD_MAXIMA_NOMBRE
+from ...juegos.manejadores import ManejadorBase
 from ..cog_abc import GroupsList, _CogABC, _GrupoABC
+from ...auxiliares import autocompletado_nombres_manejadores
 
 if TYPE_CHECKING:
 
@@ -46,7 +49,6 @@ class GrupoJugador(_GrupoABC):
             return False
         else:
             return True
-
 
 
     @appcommand(name="nombre",
@@ -112,16 +114,26 @@ class CogJuegos(_CogABC):
 
     @appcommand(name="jugar",
                 description="Inicia una partida de algún juego.")
-    async def init_diversion(self, interaccion: Interaction) -> None:
+    @describe(juego="El juega a iniciar.")
+    @autocomplete(juego=autocompletado_nombres_manejadores)
+    async def init_diversion(self, interaccion: Interaction, juego: Optional[str]) -> None:
         """
         Inicia algún juego.
         """
 
-        await interaccion.response.send_message(content="*Iniciando menu...*",
-                                                ephemeral=True)
+        if juego is None:
+            await interaccion.response.send_message(content="Por favor elige un juego:",
+                                                    ephemeral=True,
+                                                    view=SelectorJuegos(self.bot))
+            return
 
-        await interaccion.channel.send(content="Por favor elige un juego:",
-                                       view=SelectorJuegos(self.bot))
+        for manejador in ManejadorBase.lista_clases_manejadores:
+            if juego == manejador.nombre_juego():
+                await SelectorJuegos.iniciar_lobby(clase_manejador=manejador,
+                                                   interaccion=interaccion,
+                                                   bot=self.bot,
+                                                   editar=False)
+                break
 
 
 async def setup(bot: "BotShot"):

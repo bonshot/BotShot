@@ -4,16 +4,20 @@ Módulo para una vista de una partida de Tres en Raya.
 
 from typing import TYPE_CHECKING, Any, Optional
 
-from discord import ButtonStyle, Interaction
+from discord import Interaction
 from discord import PartialEmoji as Emoji
-from discord.ui import Button, button
+from discord.enums import ButtonStyle
+from discord.ui import Button
 
 from ..vista_juego_abc import VistaJuegoBase
-from ..vista_reiniciar_abc import VistaReiniciarBase, cerrar_partida
+from ..vista_reiniciar_abc import VistaReiniciarBase
 
 if TYPE_CHECKING:
+    from discord import Message
+
     from ....botshot import BotShot
     from ...modelos import JuegoBase
+    from ...registradores import RegistradorBase
 
 
 class ReiniciarTaTeTi(VistaReiniciarBase):
@@ -21,15 +25,12 @@ class ReiniciarTaTeTi(VistaReiniciarBase):
     Vista para reiniciar el Tres en Raya.
     """
 
-    async def reiniciar_extra(self, interaccion: Interaction) -> None:
+    async def reiniciar_extra(self, _interaccion: Interaction) -> None:
         """
-        Reinicia el Tres en Raya.
+        Operaciones extra a realizar antes de reiniciar la partida.
         """
 
-        self.maestra.modelo.opciones.cambiar_orden_jugadores() # Necesariamente primero
-        self.maestra.modelo.reiniciar()
-        await interaccion.message.edit(content=self.maestra.modelo.mensaje,
-                                       view=VistaTaTeTi(self.maestra.bot, self.maestra.modelo))
+        self.maestra.modelo.opciones.cambiar_orden_jugadores()
 
 
 class BotonCasilla(Button):
@@ -73,19 +74,32 @@ class VistaTaTeTi(VistaJuegoBase):
 
     def __init__(self,
                  bot: "BotShot",
-                 modelo: "JuegoBase") -> None:
+                 modelo: "JuegoBase",
+                 registrador: Optional["RegistradorBase"],
+                 mensaje_raiz: Optional["Message"]) -> None:
         """
         Inicializa una instancia de una vista de juego.
         """
 
         super().__init__(bot=bot,
-                         modelo=modelo)
+                         modelo=modelo,
+                         registrador=registrador,
+                         mensaje_raiz=mensaje_raiz)
 
         for j in range(3):
             for i in range(3):
                 self.add_item(BotonCasilla(vista_maestra=self,
                                            col=i,
                                            fil=j))
+
+
+    @staticmethod
+    def get_cerrar_id() -> str:
+        """
+        El ID del botón para cerrar la vista.
+        """
+
+        return "tictactoe_close"
 
 
     def es_jugador_actual(self, id_jugador: str) -> bool:
@@ -108,6 +122,7 @@ class VistaTaTeTi(VistaJuegoBase):
                                                     view=self)
             return
 
+        self.refrescar_stats_tateti()
         msg = ((f"Victoria para **{self.modelo.jugador_actual.nombre} " +
                 f"({self.modelo.ficha_actual})**")
                 if not self.modelo.empate()
@@ -143,14 +158,24 @@ class VistaTaTeTi(VistaJuegoBase):
         await self.actualizar_mensaje(interaccion, mensaje or self.modelo.mensaje)
 
 
-    @button(label="Cerrar",
-            custom_id="tictactoe_close",
-            style=ButtonStyle.gray,
-            emoji=Emoji.from_str("\U0001F6D1"),
-            row=4)
-    async def cerrar_tateti(self, interaccion: Interaction, _boton: Button) -> None:
+    def refrescar_stats_tateti(self) -> None:
         """
-        Cierra la partida.
+        Refresca las estadísticas de cada jugador.
         """
 
-        await cerrar_partida(interaccion)
+        stats_base = self.registrador.stats_base()
+        jug_1 = self.modelo.jugador_actual
+        jug_2 = self.modelo.jugador_anterior
+
+        _, vic1, emp1, der1 = self.registrador.get_datos(jug_1.id, stats_base)
+        _, vic2, emp2, der2 = self.registrador.get_datos(jug_2.id, stats_base)
+
+        if self.modelo.empate():
+            emp1 += 1
+            emp2 += 1
+        else:
+            vic1 += 1
+            der2 += 1
+
+        self.refrescar_datos(id_jugador=jug_1.id, victorias=vic1, empates=emp1, derrotas=der1)
+        self.refrescar_datos(id_jugador=jug_2.id, victorias=vic2, empates=emp2, derrotas=der2)

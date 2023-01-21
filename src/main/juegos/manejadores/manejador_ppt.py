@@ -2,19 +2,21 @@
 Módulo para un manejador del Piedra, Papel o Tijeras.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from ..modelos import PPT
+from ..registradores import RegistradorPPT
 from ..vistas import VistaPPT
 from .manejador_abc import ManejadorBase
 
 if TYPE_CHECKING:
 
     from ..modelos import JuegoBase
+    from ..registradores import RegistradorBase
     from ..vistas import VistaJuegoBase
 
 
-class ManejadorTaTeTi(ManejadorBase):
+class ManejadorPPT(ManejadorBase):
     """
     Clase para manejar un juego de Piedra, Papel o Tijeras.
     """
@@ -35,3 +37,12 @@ class ManejadorTaTeTi(ManejadorBase):
         """
 
         return VistaPPT
+
+
+    @staticmethod
+    def clase_registrador() -> Optional[type["RegistradorBase"]]:
+        """
+        Devuelve la clase de registrador asociada a este juego.
+        """
+
+        return RegistradorPPT

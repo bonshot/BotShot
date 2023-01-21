@@ -5,9 +5,11 @@ Módulo que contiene un mazo de cartas.
 from collections import deque as Cola
 from copy import deepcopy
 from random import shuffle
-from typing import Dict, Union
+from typing import Dict, Union, TypeAlias
 
 from ..carta import Carta, Palo
+
+StatsNaipes: TypeAlias = Dict[Union[int, str], int]
 
 
 class Mazo:
@@ -88,14 +90,14 @@ class Mazo:
         return len(self.cola)
 
 
-    def contar_cartas(self) -> Dict[Union[int, str], int]:
+    def contar_cartas(self) -> StatsNaipes:
         """
         Desencola un mazo entero y devuelve un diccionario con
         las estadísticas de este.
         """
 
         mazo = deepcopy(self)
-        stats: Dict[Union[int, str], int] = {}
+        stats: StatsNaipes = {}
 
         for key in list(range(1, 13)) + [palo.value for palo in Palo]:
             stats[key] = 0

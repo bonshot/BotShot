@@ -2,11 +2,11 @@
 Vista que pregunta por otra partida de un juego.
 """
 
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
-from discord import ButtonStyle, Interaction
+from discord import Interaction
 from discord import PartialEmoji as Emoji
+from discord.enums import ButtonStyle
 from discord.ui import Button, View, button
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ async def cerrar_partida(interaccion: Interaction) -> None:
                                             delete_after=5.0)
 
 
-class VistaReiniciarBase(ABC, View):
+class VistaReiniciarBase(View):
     """
     Vista para reiniciar una partida.
     """
@@ -57,13 +57,33 @@ class VistaReiniciarBase(ABC, View):
         return len(self.jugadores_aceptaron)
 
 
-    @abstractmethod
-    async def reiniciar_extra(self, interaccion: Interaction) -> None:
+    def jugador_aceptar(self, id_jugador: str) -> None:
         """
-        Operaciones extra obligatorias a realizar si se reinicia la partida.
+        Un jugador aceptó reiniciar, agregarlo.
         """
 
-        raise NotImplementedError
+        jug = self.maestra.get_jugador(id_jugador)
+        self.jugadores_aceptaron.append(jug)
+
+
+    async def reiniciar_extra(self, interaccion: Interaction) -> None:
+        """
+        Operaciones extra a realizar antes de reiniciar la partida.
+        """
+
+        return
+
+
+    async def reiniciar_vista(self, interaccion: Interaction) -> None:
+        """
+        Reinicia definitivamente la vista maestra.
+        """
+
+        await self.reiniciar_extra(interaccion)
+
+        self.maestra.modelo.reiniciar()
+        await interaccion.message.edit(content=self.maestra.modelo.mensaje,
+                                       view=self.maestra.clonar())
 
 
     @button(style=ButtonStyle.green,
@@ -91,14 +111,14 @@ class VistaReiniciarBase(ABC, View):
             return
 
         else:
-            jug = self.maestra.modelo.get_jugador(str(autor.id))
-            self.jugadores_aceptaron.append(jug)
+            self.jugador_aceptar(str(autor.id))
             msg = (f"Reiniciando partida... **({self.aceptaciones} / " +
                    f"{self.maestra.modelo.cantidad_jugadores})**")
             await interaccion.response.edit_message(content=msg)
 
         if self.aceptaciones == self.maestra.modelo.cantidad_jugadores:
-            await self.reiniciar_extra(interaccion)
+            await self.reiniciar_vista(interaccion)
+            await self.maestra.setup()
 
 
     @button(style=ButtonStyle.red,

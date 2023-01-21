@@ -12,6 +12,8 @@ from discord.ui import Button, View, button
 from ...juegos import Jugador
 
 if TYPE_CHECKING:
+    from discord import Message
+
     from ...juegos.manejadores import ManejadorBase
 
 
@@ -20,7 +22,7 @@ class BotonOpciones(Button):
     Botón para entrar en opciones.
     """
 
-    def __init__(self, manejador: "ManejadorBase"):
+    def __init__(self, lobby: "Lobby"):
         """
         Inicializa una instancia de 'BotonOpciones'.        
         """
@@ -32,7 +34,7 @@ class BotonOpciones(Button):
                          emoji=Emoji.from_str("\U00002699"),
                          row=3)
 
-        self.manejador: "ManejadorBase" = manejador
+        self.lobby: "Lobby" = lobby
 
 
     async def callback(self, interaccion: Interaction) -> Any:
@@ -41,8 +43,16 @@ class BotonOpciones(Button):
         Se da por hecho que las opciones y su vista no son `None`.
         """
 
-        opciones = self.manejador.opciones
-        vista_opciones = self.manejador.vista_opciones
+        autor = interaccion.user
+
+        if not self.lobby.jugador_unido(str(autor.id)):
+            msg = f"{autor.mention}, capo, como que vos no estás unido y tal..."
+            await interaccion.response.edit_message(content=msg,
+                                                    view=self)
+            return
+
+        opciones = self.lobby.manejador.opciones
+        vista_opciones = self.lobby.manejador.vista_opciones
         
         await interaccion.response.edit_message(content=opciones.mensaje,
                                                 view=vista_opciones)
@@ -55,20 +65,34 @@ class Lobby(View):
 
     def __init__(self,
                  manejador: "ManejadorBase",
-                 timeout: Optional[float]=300.0) -> None:
+                 mensaje_raiz: Optional["Message"]) -> None:
         """
         Inicializa una instancia de 'Lobby'.
         """
 
-        super().__init__(timeout=timeout)
+        super().__init__(timeout=900.0)
 
         self.clase_juego: type["ManejadorBase"] = type(manejador)
         self.manejador: "ManejadorBase" = manejador
+        self.mensaje_raiz: Optional["Message"] = mensaje_raiz
 
         if self.manejador.hay_opciones():
-            self.add_item(BotonOpciones(self.manejador))
+            self.add_item(BotonOpciones(self))
             if self.manejador.vista_opciones.menu_anterior is None:
                 self.manejador.vista_opciones.menu_anterior = self
+
+        self.actualizar_botones()
+
+
+    async def on_timeout(self) -> None:
+        """
+        Pasó el tiempo.
+        """
+
+        self.clear_items()
+        if self.mensaje_raiz is not None:
+            await self.mensaje_raiz.edit(content="*Tiempo agotado. Cerrando...*",
+                                         delete_after=5.0)
 
 
     def es_host(self, id_usuario: str) -> bool:
@@ -77,6 +101,18 @@ class Lobby(View):
         """
 
         return id_usuario == self.manejador.jugador_host.id
+
+
+    def jugador_unido(self, id_usuario: str) -> bool:
+        """
+        Determina si un jugador está unido.
+        """
+
+        for jugador in self.manejador.lista_jugadores:
+            if id_usuario == jugador.id:
+                return True
+
+        return False
 
 
     async def refrescar_mensaje(self,
@@ -126,7 +162,7 @@ class Lobby(View):
         autor = interaccion.user
         mensaje = None
 
-        if str(autor.id) in list(jug.id for jug in self.manejador.lista_jugadores):
+        if self.jugador_unido(str(autor.id)):
             mensaje = f"{autor.mention}, *vos ya estás unido.*"
         elif self.manejador.cantidad_jugadores >= self.manejador.max_jugadores:
             mensaje = "Cantidad máxima de jugadores alcanzada."
@@ -151,7 +187,7 @@ class Lobby(View):
 
         if self.es_host(str(autor.id)):
             mensaje = f"{autor.mention}, vos sos el anfitrión, no podés salir sin cerrar el lobby."
-        elif str(autor.id) not in list(jug.id for jug in self.manejador.lista_jugadores):
+        elif not self.jugador_unido(str(autor.id)):
             mensaje = f"{autor.mention}, *vos no estás unido.*"
         else:
             for jugador in self.manejador.lista_jugadores:
@@ -196,6 +232,7 @@ class Lobby(View):
         await interaccion.response.edit_message(content=self.manejador.modelo.mensaje,
                                                 embed=None,
                                                 view=self.manejador.vista_modelo)
+        await self.manejador.vista_modelo.setup()
 
 
     @button(style=ButtonStyle.gray,

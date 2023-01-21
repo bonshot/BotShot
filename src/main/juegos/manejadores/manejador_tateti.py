@@ -6,13 +6,15 @@ from typing import TYPE_CHECKING, Optional
 
 from ..modelos import TaTeTi
 from ..opciones import OpcionesTaTeTi
-from ..vistas import VistaTaTeTi, VistaOpcionesTaTeTi
+from ..registradores import RegistradorTaTeTi
+from ..vistas import VistaOpcionesTaTeTi, VistaTaTeTi
 from .manejador_abc import ManejadorBase
 
 if TYPE_CHECKING:
 
     from ..modelos import JuegoBase
     from ..opciones import OpcionesBase
+    from ..registradores import RegistradorBase
     from ..vistas import VistaJuegoBase, VistaOpcionesBase
 
 
@@ -58,3 +60,12 @@ class ManejadorTaTeTi(ManejadorBase):
         """
 
         return VistaOpcionesTaTeTi
+
+
+    @staticmethod
+    def clase_registrador() -> Optional[type["RegistradorBase"]]:
+        """
+        Devuelve la clase de registrador asociada a este juego.
+        """
+
+        return RegistradorTaTeTi

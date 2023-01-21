@@ -20,11 +20,8 @@ class Carta:
         Inicializa una instancia de 'Carta'.
         """
 
-        self._num: int = None
-        self._palo: Palo = None
-
-        self.palo: Palo = palo
-        self.num: int = num
+        self._num: int = num
+        self._palo: Palo = palo
 
 
     def __str__(self) -> str:

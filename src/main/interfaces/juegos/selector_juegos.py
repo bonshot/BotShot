@@ -2,7 +2,6 @@
 Módulo para seleccionar un juego.
 """
 
-from random import choice
 from typing import TYPE_CHECKING, Optional, TypeAlias
 
 from discord import Interaction, SelectOption
@@ -14,6 +13,8 @@ from ...juegos.vistas import Paginador
 from .lobby import Lobby
 
 if TYPE_CHECKING:
+    from discord import Message
+
     from ...botshot import BotShot
     from ...juegos.manejadores import ListaManejadores
 
@@ -42,9 +43,7 @@ class MenuJuegos(Select):
         opciones = [SelectOption(label=' '.join(juego.nombre_juego().split('_')),
                                  value=juego.nombre_juego(),
                                  description=juego.descripcion_juego(),
-                                 emoji=(juego.emojis_juego()
-                                        if juego.emojis_juego() is None
-                                        else choice(juego.emojis_juego())))
+                                 emoji=(juego.elegir_emoji()))
                                  for juego in lista_juegos]
 
         super().__init__(custom_id="game_selection_menu",
@@ -62,17 +61,13 @@ class MenuJuegos(Select):
         """
 
         eleccion = self.values[0]
-        autor = interaccion.user
+        clase_manejador =  self.selector.juegos[eleccion]
+        await self.selector.iniciar_lobby(clase_manejador=clase_manejador,
+                                          interaccion=interaccion,
+                                          bot=self.selector.bot,
+                                          editar=True)
 
-        host = Jugador.desde_usuario_discord(autor)
-        jugadores = [host]
-        manejador = self.selector.juegos[eleccion](bot=self.selector.bot,
-                                                   jugadores=jugadores,
-                                                   **interaccion.extras)
-
-        await interaccion.response.edit_message(content=f"Creando partida de `{eleccion}`!",
-                                                embed=manejador.refrescar_embed(),
-                                                view=Lobby(manejador=manejador))
+        
 
 
 class SelectorJuegos(Paginador):
@@ -107,3 +102,43 @@ class SelectorJuegos(Paginador):
         self.remove_item(self.menu_juegos)
         self.menu_juegos = MenuJuegos(selector=self)
         self.add_item(self.menu_juegos)
+
+
+    @staticmethod
+    async def iniciar_lobby(*,
+                            clase_manejador: "ManejadorBase",
+                            interaccion: Interaction,
+                            bot: "BotShot",
+                            editar: bool=True) -> None:
+        """
+        Crea una instancia de manejador, de Lobby y envía ya
+        el mensaje para interactuar.
+        """
+
+        autor = interaccion.user
+
+        msg = f"Creando partida de `{clase_manejador.nombre_juego()}`!"
+        # Este es para apaciguar el interaction.response
+        if editar:
+            # El mensaje a editar ya tiene que ser efímero
+            await interaccion.response.edit_message(content=msg, view=None)
+        else:
+            # Si se einvía view no puede ser None
+            await interaccion.response.send_message(content=msg, ephemeral=True)
+        # Este es el de verdad
+        mens: "Message" = await interaccion.channel.send(content="*Creando lobby...*")
+
+        host = Jugador.desde_usuario_discord(autor)
+        jugadores = [host]
+        clase_manejador = clase_manejador(bot=bot,
+                                          jugadores=jugadores,
+                                          usuario_creador=autor,
+                                          mensaje_raiz=mens,
+                                          **interaccion.extras)
+        lobby = Lobby(manejador=clase_manejador,
+                      mensaje_raiz=mens)
+
+
+        await mens.edit(content=msg,
+                        embed=clase_manejador.refrescar_embed(),
+                        view=lobby)

@@ -3,11 +3,12 @@ Módulo para partida genérica de un juego.
 """
 
 from abc import ABC, abstractmethod
+from random import choice
 from secrets import token_hex
 from typing import TYPE_CHECKING, Optional, TypeAlias
 
 if TYPE_CHECKING:
-    from ..jugador import ListaJugadores, Jugador
+    from ..jugador import Jugador, ListaJugadores
     from ..opciones import OpcionesBase
 
 ListaJuegos: TypeAlias = list[type["JuegoBase"]]
@@ -59,12 +60,23 @@ class JuegoBase(ABC):
 
 
     @classmethod
-    def emojis_juego(cls) -> Optional[str]:
+    def emojis_juego(cls) -> tuple[str, ...]:
         """
         Devuelve el emoji asignado al juego, si lo hay.
         """
 
         return cls.emojis_muestra
+    
+
+    @classmethod
+    def elegir_emoji(cls) -> Optional[str]:
+        """
+        Elige un emoji aleatorio de los que hay disponibles.
+        """
+
+        emojis = cls.emojis_juego()
+
+        return (emojis if emojis is None else choice(emojis))
 
 
     def __init__(self,
@@ -109,7 +121,7 @@ class JuegoBase(ABC):
         entre los jugadores actuales.
         """
 
-        return any(id_jugador == jugador.id for jugador in self.jugadores)
+        return self.get_jugador(id_jugador) is not None
 
 
     def get_jugador(self, id_jugador: str) -> Optional["Jugador"]:
@@ -160,3 +172,11 @@ class JuegoBase(ABC):
         """
 
         return False
+
+
+    def reiniciar(self) -> None:
+        """
+        Método opcional para reinciar el juego.
+        """
+
+        return
