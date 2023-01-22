@@ -35,14 +35,16 @@ almacenarlas en un directorio designado acorde. Pero en general, evoluciona seg�
 
 * **[Cómo Ejecutar](#cómo-ejecutar)**
 
-| **[Dependencias](requirements.txt)**|
-| :---------------------------------: |
-| [discord.py](https://pypi.org/project/discord.py/) |
-| [python-dotenv](https://pypi.org/project/python-dotenv/) |
-| [tinytag](https://pypi.org/project/tinytag/) |
-| [requests](https://pypi.org/project/requests/) |
-| [Pillow](https://pypi.org/project/Pillow/) |
-| [emoji](https://pypi.org/project/emoji/) |
+* **[Dependencias](requirements.txt)**
+
+    | Nombre | Versión | Extra Info. |
+    | :-: | :-: | :-: |
+    | [discord.py](https://pypi.org/project/discord.py/) | 2.1.0 | *Incluye soporte de voz* |
+    | [python-dotenv](https://pypi.org/project/python-dotenv/) | 0.21.0 |  |
+    | [tinytag](https://pypi.org/project/tinytag/) | 1.8.1 |  |
+    | [requests](https://pypi.org/project/requests/) | 2.28.1 |  |
+    | [Pillow](https://pypi.org/project/Pillow/) | 9.4.0 |  |
+    | [emoji](https://pypi.org/project/emoji/) | 2.2.0 |  |
 
 * **[Licencia MIT](LICENSE)**
 
