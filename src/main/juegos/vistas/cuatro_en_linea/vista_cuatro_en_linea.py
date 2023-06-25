@@ -6,7 +6,6 @@ from io import BytesIO
 from typing import TYPE_CHECKING, Any, Optional
 
 from discord import File, Interaction
-from discord import PartialEmoji as Emoji
 from discord.enums import ButtonStyle
 from discord.ui import Button
 from PIL.Image import new as img_new
@@ -32,7 +31,7 @@ class VistaReiniciarCuatroEnLinea(VistaReiniciarBase):
     Vista para reiniciar el 4 en Línea.
     """
 
-    async def reiniciar_extra(self, _interaccion: Interaction) -> None:
+    async def reiniciar_extra(self) -> None:
         """
         Reinicia el 4 en Línea.
         """
@@ -151,11 +150,9 @@ class VistaCuatroEnLinea(VistaJuegoBase):
         Da inicio al juego.
         """
 
-        await self.mensaje_raiz.delete()
-        mens = await self.mensaje_raiz.channel.send(content=self.modelo.mensaje,
-                                                    file=self.arch_img(),
-                                                    view=self)
-        self.mensaje_raiz = mens
+        await self.mensaje_raiz.edit(content=self.modelo.mensaje,
+                                     attachments=[self.arch_img()],
+                                     view=self)
 
 
     def es_jugador_actual(self, id_jugador: str) -> bool:
@@ -238,42 +235,34 @@ class VistaCuatroEnLinea(VistaJuegoBase):
         Actualiza el mensaje de la partida.
         """
 
-        # borramos el mensaje actual, lo cambiamos por otro
-        await interaccion.response.edit_message(content="*Cargando...*",
-                                                view=None)
-        await self.mensaje_raiz.delete()
-
         arch = (self.arch_img()
                 if not self.modelo.opciones.modo_texto
                 else None)
+        arch_ls = [arch] if arch is not None else []
 
         if not self.modelo.terminado():
-
             msg = (self.modelo.mensaje if mensaje is None else mensaje)
-            mens = await interaccion.channel.send(content=msg,
-                                                  file=arch,
-                                                  view=self)
+            await interaccion.response.edit_message(content=msg,
+                                                    attachments=arch_ls,
+                                                    view=self)
+            return
 
-        else:
-            msg = ((f"Ganó **{self.modelo.jugador_actual.nombre}" +
-                    (f" ({self.modelo.letra_actual})**"
-                    if self.modelo.opciones.modo_texto
-                    else "**"))
-                    if not self.modelo.empate()
-                    else "Es un empate.")
+        msg = ((f"Ganó **{self.modelo.jugador_actual.nombre}" +
+                (f" ({self.modelo.letra_actual})**"
+                 if self.modelo.opciones.modo_texto
+                 else "**"))
+               if not self.modelo.empate()
+               else "Es un empate.")
+        msg += f"\n\n¿Otra partida? **(0 / {self.modelo.cantidad_jugadores})**"
 
-            self.refrescar_stats_cuatro_en_linea()
-            self.clear_items()
-            jug = self.modelo.cantidad_jugadores
-            mens = await interaccion.channel.send(content=(msg + f"\n\n¿Otra partida? " +
-                                                                 f"**(0 / {jug})**"),
-                                                  file=arch,
-                                                  view=VistaReiniciarCuatroEnLinea(
+        self.refrescar_stats_cuatro_en_linea()
+        self.clear_items()
+        await interaccion.response.edit_message(content=msg,
+                                                attachments=arch_ls,
+                                                view=VistaReiniciarCuatroEnLinea(
                                                         vista_maestra=self
                                                     )
                                                 )
-
-        self.mensaje_raiz = mens
 
 
     def refrescar_stats_cuatro_en_linea(self) -> None:

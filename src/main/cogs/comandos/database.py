@@ -2,10 +2,12 @@
 Cog que agrupa comandos para interactuar con la DB.
 """
 
+from io import BytesIO
 from sqlite3 import OperationalError
 from typing import TYPE_CHECKING, Any, Optional
+from zipfile import ZIP_DEFLATED, ZipFile
 
-from discord import Interaction
+from discord import File, Interaction
 from discord.app_commands import Choice, autocomplete, choices
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
@@ -20,6 +22,7 @@ from ..cog_abc import GroupsList, _CogABC, _GrupoABC
 
 if TYPE_CHECKING:
     from ...botshot import BotShot
+    from ...db import FetchResult
 
 
 class GrupoDB(_GrupoABC):
@@ -106,6 +109,60 @@ class GrupoDB(_GrupoABC):
         return conds
 
 
+    def _procesar_res(self, res: "FetchResult") -> tuple[str, list[BytesIO]]:
+        """
+        Procesa resoluciones para poder mostrarse.
+        """
+
+        datos = []
+        lista_archivos = []
+
+        for dato in res:
+            d = repr(dato)
+
+            if isinstance(dato, bytes):
+                b_len = len(dato)
+                s = "" if b_len == 1 else "s"
+                d = f"Blob de {len(dato)} byte{s}."
+
+                arch = BytesIO(dato)
+                arch.seek(0)
+                lista_archivos.append(arch)
+
+            datos.append(f"`{d}`")
+
+        datos_str = ",\t".join(datos)
+        return (f"({datos_str})", lista_archivos)
+
+
+    def _procesar_arch(self, lista_arch: list[BytesIO], limite: int=10) -> list[BytesIO]:
+        """
+        Si la lista excede el límite de archivos, los comprime en un ZIP.
+        """
+
+        excede = len(lista_arch) > limite
+        lista_final = []
+        arch_zip = BytesIO()
+        zf = ZipFile(arch_zip, mode="w", compression=ZIP_DEFLATED)
+
+        for i, arch in enumerate(lista_arch):
+            # No se puede adivinar la extensión
+            nombre_dato = f"dato_{str(i).zfill(2)}"
+
+            if excede:
+                zf.writestr(nombre_dato, arch.read())
+                arch.seek(0)
+            else:
+                lista_final.append(File(arch, filename=nombre_dato))
+        
+        zf.close()
+        if excede:
+            arch_zip.seek(0)
+            lista_final = [File(arch_zip, filename="datos.zip")]
+
+        return lista_final
+
+
     @appcommand(name="linea",
                 description="Ejecuta una operación de una línea.")
     @describe(comando="El comando a ejecutar. Debe obedecer la sintaxis de SQLite3.")
@@ -180,9 +237,21 @@ class GrupoDB(_GrupoABC):
         try:
             conds = self._procesar_conds(condiciones)
             res = sacar_datos_de_tabla(tabla=tabla,
-                                       sacar_uno=bool(sacar_uno),
+                                       sacar_uno=bool(sacar_uno.value
+                                                      if isinstance(sacar_uno, Choice)
+                                                      else sacar_uno),
                                        **conds)
-            res_msg = cita + "\n".join([f"- `{str(r)}`" for r in res])
+            res = [res] if sacar_uno else res
+
+            lista_datos = []
+            lista_arch = []
+            for r in res:
+                datos, l_archs = self._procesar_res(r)
+                lista_datos.append(f"- {datos}")
+                lista_arch.extend(l_archs)
+
+
+            res_msg = cita + "\n".join(lista_datos)
 
         except SyntaxError:
             res_msg = "**[ERROR]** `/db fetch`: *Sintaxis inválida.*"
@@ -190,9 +259,11 @@ class GrupoDB(_GrupoABC):
         except OperationalError as e:
             res_msg = f"**[ERROR]** `/db fetch`: *{str(e)!r}*"
 
-        await interaccion.response.send_message(content=(res_msg
+        res_msg_cap = res_msg if len(res_msg) < 2000 else f"{res_msg[:1995]}[...]"
+        await interaccion.response.send_message(content=(res_msg_cap
                                                         if res_msg.lstrip(cita)
                                                         else "*No se encontró nada.*"),
+                                                files=self._procesar_arch(lista_arch),
                                                 ephemeral=True)
 
 

@@ -2,13 +2,16 @@
 Módulo para atajos de sacar datos de una DB.
 """
 
+from io import BytesIO
 from os import PathLike
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple, TypeAlias
 
 from ..database import emoji_str, sacar_datos_de_tabla
 
 if TYPE_CHECKING:
     from ..database import FetchResult
+
+InfoJug: TypeAlias = Tuple[str, str, str, BytesIO]
 
 
 def get_propiedad(propiedad: str) -> "FetchResult":
@@ -182,22 +185,42 @@ def get_usuarios_autorizados() -> list[Tuple[int, str, int]]:
                                 sacar_uno=False)
 
 
-def get_jugador(id_jugador: str) -> Optional[Tuple[str, str, str]]:
+def get_jugadores(sacar_uno: bool=False, **conds) -> Optional[Tuple[InfoJug, ...]]:
     """
-    Consigue un jugador de la DB.
+    Devuelve todos los jugadores registrados en la DB.
     """
+
+    lista_jug = []
 
     res = sacar_datos_de_tabla(tabla="jugadores",
-                               sacar_uno=True,
-                               id=id_jugador)
-
+                               sacar_uno=sacar_uno,
+                               **conds)
     res = (res if bool(res) else None)
 
     if res is None:
         return res
 
-    id_jug, nombre, emoji = res
-    return id_jug, nombre, (emoji_str(emoji) if emoji.strip() else None)
+    if sacar_uno:
+        res = (res,)
+
+    for id_jug, nombre, emoji, img in res:
+        em = (emoji_str(emoji) if emoji.strip() else None)
+        im = (BytesIO(img) if img != b"\x00" else None)
+        lista_jug.append((id_jug, nombre, em, im))
+
+    return tuple(lista_jug)
+
+
+def get_jugador(id_jugador: str) -> Optional[InfoJug]:
+    """
+    Consigue un jugador de la DB.
+    """
+
+    res = get_jugadores(sacar_uno=True,
+                        # Condiciones
+                        id=id_jugador)
+
+    return (res if res is None else res[0])
 
 
 def get_minecraftia_font() -> PathLike:
@@ -212,7 +235,19 @@ def get_cartas_espaniolas_path() -> PathLike:
     return f"{get_img_juegos_path()}/naipes"
 
 
+def get_dorso_carta_espaniola_path() -> PathLike:
+    "Consigue el path del dorso de un naipe español."
+
+    return f"{get_cartas_espaniolas_path()}/dorso.png"
+
+
+def get_plantilla_carta_espaniola_path() -> PathLike:
+    "Consigue el path de la plantilla de un naipe español."
+
+    return f"{get_cartas_espaniolas_path()}/plantilla.png"
+
+
 def get_mesa_cartas_path() -> PathLike:
     "Consigue el path de un fondo de mesa de cartas."
 
-    return f"{get_imagenes_path()}/bg/mesa-cartas.png"
+    return f"{get_img_juegos_path()}/bg/mesa-cartas.png"

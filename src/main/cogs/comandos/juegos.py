@@ -2,25 +2,35 @@
 Cog para manejar comandos de juegos.
 """
 
+from io import BytesIO
+from random import randint
 from typing import TYPE_CHECKING, Optional
 
-from discord import Interaction
-from discord.app_commands import autocomplete
+from discord import Attachment, Colour, Embed, File, Interaction
+from discord.app_commands import Choice, autocomplete, choices
 from discord.app_commands import command as appcommand
 from discord.app_commands import describe
 from emoji import is_emoji
+from PIL.Image import open as img_open
 
+from ...auxiliares import (autocompletado_nombres_jugadores,
+                           autocompletado_nombres_manejadores)
 from ...db.atajos import (actualizar_emoji_de_jugador,
-                          actualizar_nombre_de_jugador)
+                          actualizar_foto_perfil_de_jugador,
+                          actualizar_nombre_de_jugador,
+                          existe_jugador_registrado, get_jugador,
+                          registrar_jugador)
 from ...interfaces import SelectorJuegos
 from ...juegos import LONGITUD_MAXIMA_NOMBRE
 from ...juegos.manejadores import ManejadorBase
 from ..cog_abc import GroupsList, _CogABC, _GrupoABC
-from ...auxiliares import autocompletado_nombres_manejadores
 
 if TYPE_CHECKING:
 
     from ...botshot import BotShot
+
+MIN_W: int = 250
+MIN_H: int = 250
 
 
 class GrupoJugador(_GrupoABC):
@@ -51,6 +61,28 @@ class GrupoJugador(_GrupoABC):
             return True
 
 
+    def _color_aleatorio(self) -> str:
+        """
+        Devuelve un color aleatorio en forma de string.
+        """
+
+        num =  f"{randint(0x000000, 0xFFFFFF):X}".zfill(6)
+        return f"#{num}"
+
+
+    def _verificar_jugador(self, id_jugador: str, nombre_jugador: str) -> bool:
+        """
+        Verifica si existe un jugador. Si no, lo crea.
+        """
+
+        if existe_jugador_registrado(id_jugador):
+            return True
+
+        registrar_jugador(id_jugador=id_jugador,
+                          nombre=nombre_jugador)
+        return False
+
+
     @appcommand(name="nombre",
                 description="Cambiar el nombre del jugador asociado.")
     @describe(nuevo_nombre="El nuevo nombre a utilizar.")
@@ -67,9 +99,13 @@ class GrupoJugador(_GrupoABC):
             return
 
         autor = interaccion.user
+        id_jug = str(autor.id)
+        nombre_jug = autor.display_name
 
-        actualizar_nombre_de_jugador(id_jugador=str(autor.id),
-                                     nuevo_nombre=autor.display_name,)
+        self._verificar_jugador(id_jug, nombre_jug)
+
+        actualizar_nombre_de_jugador(id_jugador=id_jug,
+                                     nuevo_nombre=nuevo_nombre)
         msg = f"*Nombre cambiado a* `{nuevo_nombre}` *correctamente.*"
         await interaccion.response.send_message(content=msg,
                                                 ephemeral=True)
@@ -92,10 +128,129 @@ class GrupoJugador(_GrupoABC):
         else:
             msg = f"*Emoji cambiado a* `{nuevo_emoji}` *correctamente.*"
             codepoint = f"U+{ord(nuevo_emoji):X}" # U+XXXX
-            actualizar_emoji_de_jugador(str(interaccion.user.id), codepoint)
+
+            autor = interaccion.user
+            id_jug = str(autor.id)
+            nombre_jug = autor.display_name
+
+            self._verificar_jugador(id_jug, nombre_jug)
+            actualizar_emoji_de_jugador(id_jug, codepoint)
 
         await interaccion.response.send_message(content=msg,
                                                 ephemeral=True)
+
+
+    async def _procesar_imagen(self, imagen: Attachment) -> BytesIO:
+        """
+        Procesa la imagen para que sea cuadrada y de formato PNG.
+        """
+
+        img_obj = BytesIO()
+        final_img = BytesIO()
+        await imagen.save(img_obj, seek_begin=True)
+
+        with img_open(img_obj) as im:
+            if im.width > im.height:
+                im = im.resize((im.height, im.height))
+            
+            elif im.height > im.width:
+                im = im.resize((im.width, im.width))
+
+            im.convert("RGBA").save(final_img, format="PNG")
+
+        final_img.seek(0) # por si las moscas
+        return final_img
+
+
+    @appcommand(name="imagen",
+                description="Cambiar la foto de perfil del jugador asociado.")
+    @describe(nueva_imagen="La nueva imagen a utilizar.")
+    async def cambiar_foto_perfil(self, interaccion: Interaction, nueva_imagen: Attachment) -> None:
+        """
+        Cambia la imagen de perfil de un jugador.
+        """
+
+        if "image" not in nueva_imagen.content_type:
+            msg = "*Este archivo no es una imagen. Sube una preferentemente de formato `PNG`.*"
+        
+        elif (nueva_imagen.width < MIN_W or nueva_imagen.height < MIN_H):
+            w, h = nueva_imagen.width, nueva_imagen.height
+            msg = (f"Tamaño de imagen **{w}x{h} px** no válida. Debe de ser como mínimo de " +
+                   f"**{MIN_W}x{MIN_H} px**.")
+
+        else:
+            msg = f"Imagen `{nueva_imagen.filename}` actualizada correctamente."
+            autor = interaccion.user
+            id_jug = str(autor.id)
+            nombre_jug = autor.display_name
+
+            self._verificar_jugador(id_jug, nombre_jug)
+            actualizar_foto_perfil_de_jugador(id_jug,
+                                              await self._procesar_imagen(nueva_imagen))
+
+        await interaccion.response.send_message(content=msg,
+                                                ephemeral=True)
+
+
+    @appcommand(name="perfil",
+                description="Muestra una presentación básica de un jugador.")
+    @describe(jugador="El jugador a mostrar.",
+              efimero="Si el resultado se debería mostrar sólo a ti.")
+    @choices(efimero=[
+        Choice(name="Sí", value=1),
+        Choice(name="No", value=0)
+    ])
+    @autocomplete(jugador=autocompletado_nombres_jugadores)
+    async def mostrar_perfil_jugador(self,
+                                     interaccion: Interaction,
+                                     jugador: Optional[str]=None,
+                                     efimero: Choice[int]=1) -> None:
+        """
+        Muestra información básica de un jugador.
+        """
+
+        es_efimero = bool((efimero.value if isinstance(efimero, Choice) else efimero))
+        await interaccion.response.defer(ephemeral=es_efimero)
+
+        autor = interaccion.user
+        id_autor = str(autor.id)
+        nombre_autor = autor.display_name
+        self._verificar_jugador(id_autor, nombre_autor)
+
+        info_jug = (get_jugador(id_autor) if jugador is None else get_jugador(jugador))
+        id_jug, nombre_jug, emoji_jug, img_jug = info_jug
+        usuario = await self.bot.fetch_user(int(id_jug))
+        img_autor = await self.bot.fetch_avatar(int(id_jug))
+
+        if img_jug is not None:
+            with img_open(img_jug) as im:
+                fmt = im.format
+                img_w, img_h = im.size
+            img_jug.seek(0) # Al leerlo hace falta devolverlo a 0
+
+        miniatura = (img_jug if img_jug is not None else img_autor)
+        emoji_val = (emoji_jug if emoji_jug is not None else "*Ninguno*")
+        img_val = (f"*{fmt.upper()} de tamaño {img_w}x{img_h} px*"
+                   if img_jug is not None
+                   else "*Ninguna*")
+        embed = Embed(title=f"Info. de {nombre_jug}",
+                      color=Colour.from_str(self._color_aleatorio()))
+
+        miniatura_arch = File(miniatura, filename="miniatura.png")
+        embed.set_thumbnail(url="attachment://miniatura.png")\
+             .set_author(name=usuario.display_name, icon_url=usuario.display_avatar.url)\
+             .add_field(name="Nombre", value=nombre_jug, inline=True)\
+             .add_field(name="id", value=id_jug, inline=True)\
+             .add_field(name="Emoji", value=emoji_val, inline=True)\
+             .add_field(name="Imagen", value=img_val, inline=True)
+
+        mens = await interaccion.followup.send(wait=True, # Para que devuelva el mensaje
+                                               file=miniatura_arch, # necesario para el embed
+                                               embed=embed,
+                                               ephemeral=es_efimero)
+
+        if not es_efimero:
+            await mens.delete(delay=15.0)
 
 
 class CogJuegos(_CogABC):

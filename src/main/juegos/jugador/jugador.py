@@ -3,6 +3,7 @@ Módulo para el modelado de un jugador.
 """
 
 from typing import Optional, TypeAlias
+from io import BytesIO
 
 from discord import User
 
@@ -40,10 +41,11 @@ class Jugador:
                        id=str(usuario.id),
                        **extras)
 
-        id_jug, nombre, emoji = jug
+        id_jug, nombre, emoji, img = jug
         return cls(nombre=nombre,
                    id=id_jug,
                    emoji_preferido=emoji,
+                   foto_perfil=img,
                    **extras)
 
 
@@ -51,6 +53,7 @@ class Jugador:
                  nombre: str,
                  id: str,
                  emoji_preferido: Optional[str]=None,
+                 foto_perfil: Optional[BytesIO]=None,
                  **kwargs) -> None:
         """
         Inicializa una instancia de 'Jugador'.
@@ -65,8 +68,18 @@ class Jugador:
                             else nombre[:LONGITUD_MAXIMA_NOMBRE])
         self.id: str = id
         self.emoji: Optional[str] = emoji_preferido
+        self.foto_perfil: Optional[BytesIO] = foto_perfil
+        self.prof_seek(0) # Por si las moscas, devolver la posición al principio
 
         self.extras: dict = kwargs
+
+
+    def __eq__(self, otro: "Jugador") -> bool:
+        """
+        Determina si dos jugadores son iguales.
+        """
+
+        return self.id == otro.id and self.nombre == otro.nombre
 
 
     def cambiar_nombre(self, nuevo_nombre: str) -> bool:
@@ -84,9 +97,10 @@ class Jugador:
         return True
 
 
-    def __eq__(self, otro: "Jugador") -> bool:
+    def prof_seek(self, offset: int, whence: int=0, /) -> None:
         """
-        Determina si dos jugadores son iguales.
+        Devuelve el puntero del búfer a la posición indicada.
         """
 
-        return self.id == otro.id and self.nombre == otro.nombre
+        if self.foto_perfil is not None:
+            self.foto_perfil.seek(offset, whence)

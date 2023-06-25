@@ -9,7 +9,7 @@ from discord.app_commands import Choice
 
 from ..archivos import buscar_archivos, partir_ruta
 from ..db import nombres_tablas
-from ..db.atajos import (get_canales_escuchados, get_recomendaciones_carpetas,
+from ..db.atajos import (get_canales_escuchados, get_recomendaciones_carpetas, get_jugadores,
                          get_sonidos_path, get_usuarios_autorizados)
 from ..juegos.manejadores import ManejadorBase
 
@@ -180,4 +180,20 @@ async def autocompletado_nombres_manejadores(_interaccion: Interaction,
                value=juego.nombre_juego())
         for juego in ManejadorBase.lista_clases_manejadores
         if current.lower() in juego.nombre_juego().lower()
+    ][:25]
+
+
+async def autocompletado_nombres_jugadores(_interaccion: Interaction,
+                                           current: str) -> list[Choice[str]]:
+    """
+    Devuelve los nombres de todos los jugadores registrados.
+    """
+
+    incluir_emoji = (lambda em : ("" if em is None else f"{em}  "))
+
+    return [
+        Choice(name=f"{incluir_emoji(emoji_jug)}{nombre_jug}",
+               value=id_jug)
+        for (id_jug, nombre_jug, emoji_jug, _) in get_jugadores()
+        if current.lower() in nombre_jug
     ][:25]

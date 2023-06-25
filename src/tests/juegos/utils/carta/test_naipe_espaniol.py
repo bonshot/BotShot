@@ -77,7 +77,7 @@ class TestCarta(TestCase):
         """
         Si, en el constructor de una carta, se especifican
         tanto un número como el palo de comodín, el número
-        debería ser ignorado, pues comodín tien un valor constante.
+        debería ser ignorado, pues el comodín tiene un valor constante.
         """
 
         numero_cualquiera = 11

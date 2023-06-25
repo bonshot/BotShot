@@ -2,7 +2,6 @@
 Cog general para uso de herencia.
 """
 
-from sys import exc_info
 from traceback import format_exc
 from typing import TYPE_CHECKING, Any, Optional, TypeAlias, Union
 

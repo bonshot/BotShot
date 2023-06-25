@@ -2,7 +2,10 @@
 Módulo para atajos de UPDATE.
 """
 
-from ..database import actualizar_dato_de_tabla
+from io import BytesIO
+from sqlite3 import connect
+
+from ..database import DEFAULT_DB, actualizar_dato_de_tabla
 
 
 def actualizar_nombre_de_jugador(id_jugador: str, nuevo_nombre: str) -> None:
@@ -29,3 +32,18 @@ def actualizar_emoji_de_jugador(id_jugador: str, nuevo_emoji: str) -> None:
                              valor=nuevo_emoji,
                              # condiciones,
                              id=id_jugador)
+
+
+def actualizar_foto_perfil_de_jugador(id_jugador: str, nueva_imagen: BytesIO) -> None:
+    """
+    Cambia la imagen de perfil de un jugador en la DB por otra.
+    """
+
+    datos = {
+        "idjug": id_jugador,
+        "img": nueva_imagen.read()
+    }
+
+    with connect(DEFAULT_DB) as con:
+        cur = con.cursor()
+        cur.execute("UPDATE jugadores SET img=:img WHERE id=:idjug;", datos)

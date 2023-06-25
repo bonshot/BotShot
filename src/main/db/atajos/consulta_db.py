@@ -27,3 +27,12 @@ def existe_usuario_autorizado(id_usuario: int) -> bool:
             return True
 
     return False
+
+
+def existe_jugador_registrado(id_jugador: str) -> bool:
+    """
+    Verifica si existe un jugador con el ID dado.
+    """
+
+    return existe_dato_en_tabla(tabla="jugadores",
+                                id=id_jugador)

@@ -25,7 +25,7 @@ class ReiniciarTaTeTi(VistaReiniciarBase):
     Vista para reiniciar el Tres en Raya.
     """
 
-    async def reiniciar_extra(self, _interaccion: Interaction) -> None:
+    async def reiniciar_extra(self) -> None:
         """
         Operaciones extra a realizar antes de reiniciar la partida.
         """
@@ -46,7 +46,7 @@ class BotonCasilla(Button):
         Inicializa un botón de casilla.
         """
 
-        super().__init__(label=" ",
+        super().__init__(label="\U00003164", # Caracter invisible
                          custom_id=f"tictactoe_{col}_{fil}",
                          style=ButtonStyle.gray,
                          row=fil)

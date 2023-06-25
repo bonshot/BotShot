@@ -75,7 +75,6 @@ class JuegoBase(ABC):
         """
 
         emojis = cls.emojis_juego()
-
         return (emojis if emojis is None else choice(emojis))
 
 

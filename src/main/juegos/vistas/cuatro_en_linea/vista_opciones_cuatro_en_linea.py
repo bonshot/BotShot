@@ -54,10 +54,10 @@ class VistaOpcionesCuatroEnLinea(VistaOpcionesBase):
         await self.refrescar_opciones(interaccion, boton)
 
 
-    @button(label=f"{colores_default_label} OFF",
+    @button(label=f"{colores_default_label} ON",
             custom_id="connect_four_prop_default_colors",
             disabled=False,
-            style=ButtonStyle.red,
+            style=ButtonStyle.green,
             row=0)
     async def cambiar_a_colores_predeterminados(self,
                                                 interaccion: Interaction,

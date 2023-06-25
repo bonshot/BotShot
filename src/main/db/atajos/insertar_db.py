@@ -2,13 +2,16 @@
 Módulo para atajos de INSERT.
 """
 
+from io import BytesIO
+from sqlite3 import connect
 from typing import Optional
 
-from ..database import (actualizar_dato_de_tabla, existe_dato_en_tabla,
-                        insertar_datos_en_tabla)
+from ..database import (DEFAULT_DB, actualizar_dato_de_tabla,
+                        existe_dato_en_tabla, insertar_datos_en_tabla)
 from .actualizar_db import (actualizar_emoji_de_jugador,
+                            actualizar_foto_perfil_de_jugador,
                             actualizar_nombre_de_jugador)
-from .consulta_db import existe_canal_escuchado
+from .consulta_db import existe_canal_escuchado, existe_jugador_registrado
 from .sacar_db import get_prefijo_default
 
 
@@ -117,7 +120,8 @@ def registrar_usuario_autorizado(nombre: str,
 
 def registrar_jugador(id_jugador: str,
                       nombre: str,
-                      emoji: Optional[str]=None) -> bool:
+                      emoji: Optional[str]=None,
+                      foto_perfil: Optional[BytesIO]=None) -> bool:
     """
     Registra un jugador en la DB.
 
@@ -126,17 +130,27 @@ def registrar_jugador(id_jugador: str,
     """
 
     emoji_val = (emoji if emoji is not None else " ")
+    img_val = (BytesIO(b"\x00") if foto_perfil is None else foto_perfil)
+    img_val.seek(0)
 
-    if existe_dato_en_tabla(tabla="jugadores",
-                            id=id_jugador):
+    if existe_jugador_registrado(id_jugador):
         actualizar_nombre_de_jugador(id_jugador=id_jugador,
                                      nuevo_nombre=nombre)
         actualizar_emoji_de_jugador(id_jugador=id_jugador,
                                     nuevo_emoji=emoji_val)
+        actualizar_foto_perfil_de_jugador(id_jugador=id_jugador,
+                                          nueva_imagen=img_val)
+        
         return False
 
-    insertar_datos_en_tabla(tabla="jugadores",
-                            llave_primaria_por_defecto=False,
-                            valores=(id_jugador, nombre, emoji_val))
-    return True
+    datos = {
+        "id": id_jugador,
+        "nombre": nombre,
+        "emoji": emoji_val,
+        "img": img_val.read()
+    }
+    with connect(DEFAULT_DB) as con:
+        cur = con.cursor()
+        cur.execute("INSERT INTO jugadores VALUES(:id, :nombre, :emoji, :img)", datos)
 
+    return True

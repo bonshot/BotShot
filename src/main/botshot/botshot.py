@@ -3,6 +3,7 @@ Módulo dedicado a contener la lógica de una clase que sobrecarga a
 'discord.ext.commands.Bot'.
 """
 
+from io import BytesIO
 from asyncio import set_event_loop_policy
 from platform import system
 from typing import TYPE_CHECKING, Callable
@@ -120,3 +121,17 @@ class BotShot(Bot):
 
         return (user_id == self.owner_id
                 or existe_usuario_autorizado(user_id))
+
+
+    async def fetch_avatar(self, usuario_id: int) -> BytesIO:
+        """
+        Devuelve un archivo que es la imagen de perfil de un usuario.
+
+        Si se necesita la URL es mejor utilizar `User.avatar.url`.
+        """
+
+        usuario = await self.fetch_user(usuario_id)
+        img = BytesIO()
+        await usuario.display_avatar.save(img, seek_begin=True)
+
+        return img

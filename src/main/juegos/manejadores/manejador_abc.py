@@ -280,10 +280,11 @@ class ManejadorBase(ABC):
         """
 
         mostrar_nombre = self.clase_modelo().nombre_juego()
+        descripcion = self.clase_modelo().descripcion_juego()
         emoji = self.clase_modelo().elegir_emoji()
         mostrar_emoji = '' if emoji is None else f"{emoji} "
         embed = Embed(title=(f"Partida de {mostrar_emoji}{mostrar_nombre}"),
-                      description=f"*Máx jug: **{self.max_jugadores}***")
+                      description=f"{descripcion}\n-\n*Máx jug: **{self.max_jugadores}***")
 
         jugadores_esperando = "\n".join(
             list((f"- {(f'{jugador.emoji} ' if jugador.emoji is not None else ' ')}" +

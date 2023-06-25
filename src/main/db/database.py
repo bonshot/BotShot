@@ -112,6 +112,19 @@ def existe_tabla(nombre_tabla: str, db_path: PathLike=DEFAULT_DB)-> bool:
     return nombre_tabla in nombres_tablas(db_path=db_path)
 
 
+def nombres_columnas(tabla: str, db_path: PathLike=DEFAULT_DB) -> tuple[str, ...]:
+    """
+    Devuelve los nombres de las columnas de una tabla.
+    """
+
+    with connect(db_path) as con:
+        cur = con.cursor()
+        cur.execute("SELECT * FROM :tabla", {"tabla": tabla})
+        nombres = tuple(desc[0] for desc in cur.description)
+
+    return nombres
+
+
 def _formatear_llaves_foraneas(dic_llaves: DictLlaveForanea,
                                nombres_revisados: list[str]) -> str:
     """

@@ -20,8 +20,12 @@ class Carta:
         Inicializa una instancia de 'Carta'.
         """
 
-        self._num: int = num
-        self._palo: Palo = palo
+        # Temporalmente hasta que se asignen bien más abajo
+        self._num: Optional[int] = num
+        self._palo: Optional[Palo] = palo
+
+        self.num: int = num
+        self.palo: Palo = palo
 
 
     def __str__(self) -> str:
@@ -35,6 +39,14 @@ class Carta:
         return f"Carta {self.num} de {self.palo.value}"
 
 
+    def __repr__(self) -> str:
+        """
+        Devuelve la representación de la carta.
+        """
+
+        return f"<{str(self)}>"
+
+
     @property
     def num(self) -> int:
         """
@@ -45,7 +57,7 @@ class Carta:
 
 
     @num.setter
-    def num(self, nuevo_num: Optional[int]) -> None:
+    def num(self, nuevo_num: Optional[int]=None) -> None:
         """
         Asigna un nuevo valor al numero de la carta.
         """
@@ -118,8 +130,41 @@ class Carta:
         Los comodines son automáticamente compatibles con cualquier otra carta.
         """
 
-        return any((self.es_comodin(), otra.es_comodin(),
-                    self.mismo_num(otra), self.mismo_palo(otra)))
+        return (self.es_comodin() or
+                otra.es_comodin() or
+                self.mismo_num(otra) or
+                self.mismo_palo(otra))
+
+
+    def es_anterior_a(self, otra: "Carta") -> bool:
+        """
+        Verifica si el número de una carta es justo uno anterior
+        al de otra. Si la otra es un 1 (uno), esto es falso.
+        """
+
+        return (self.num == (otra.num - 1)
+                if otra.num != 1
+                else False)
+
+
+    def es_posterior_a(self, otra: "Carta") -> bool:
+        """
+        Verifica si el número de una carta es justo uno posterior
+        al de otra. Si la otra es un 12 (doce), esto es falso.
+        """
+
+        return (self.num == (otra.num + 1)
+                if otra.num != 12
+                else False)
+
+
+    def hace_escalera_a(self, otra: "Carta") -> bool:
+        """
+        Verifica si una carta tiene potencial de hacerle escalera a otra.
+        """
+
+        return (self.mismo_palo(otra) and
+                (self.es_anterior_a(otra) or self.es_posterior_a(otra)))
 
 
     def __eq__(self, otra: "Carta") -> bool:

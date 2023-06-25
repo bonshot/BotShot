@@ -20,7 +20,7 @@ class OpcionesCuatroEnLinea(OpcionesBase):
 
         self.modo_texto: bool = False
         self.primero_jugador_1: bool = True
-        self.colores_default: bool = False
+        self.colores_default: bool = True
 
 
     def propiedades(self) -> list:
